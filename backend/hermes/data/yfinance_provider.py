@@ -133,9 +133,18 @@ def _apply_sanity_filters(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _normalise_columns(raw: pd.DataFrame) -> pd.DataFrame:
-    """Lowercase yfinance column names and keep only OHLCV columns."""
+    """Lowercase yfinance column names and keep only OHLCV columns.
+
+    yfinance >= 0.2.18 returns a MultiIndex (field, ticker) for single-ticker
+    downloads. Flatten to the field name (first level) in all cases.
+    """
     raw = raw.copy()
-    raw.columns = [c.lower() for c in raw.columns]
+
+    # Flatten MultiIndex columns — take the first level (the field name)
+    if isinstance(raw.columns, pd.MultiIndex):
+        raw.columns = [str(c[0]).lower() for c in raw.columns]
+    else:
+        raw.columns = [str(c).lower() for c in raw.columns]
 
     # yfinance sometimes returns 'adj close' — treat as 'close'
     if "close" not in raw.columns and "adj close" in raw.columns:
