@@ -11,8 +11,10 @@ from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from hermes.api.performance import router as performance_router
 from hermes.config import settings
 from hermes.events.bus import bus
+from hermes.outcome.tracker import run_outcome_check
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,8 @@ async def lifespan(app: FastAPI):
         IntervalTrigger(minutes=15),
         id="intra_scan",
     )
+    # Outcome tracker: every hour
+    scheduler.add_job(run_outcome_check, IntervalTrigger(hours=1), id="outcome_tracker")
 
     if settings.hermes_env != "test":
         scheduler.start()
@@ -90,6 +94,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(performance_router)
 
 
 # ── Routes ────────────────────────────────────────────────────
