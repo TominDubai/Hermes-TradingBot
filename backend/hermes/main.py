@@ -20,6 +20,23 @@ from hermes.outcome.tracker import run_outcome_check
 
 logger = logging.getLogger(__name__)
 
+# ── Lazy singletons ───────────────────────────────────────────
+
+def _get_broker():
+    """Return the configured broker (Alpaca paper or PaperBroker fallback)."""
+    if settings.alpaca_configured:
+        from hermes.execution.alpaca_broker import AlpacaBroker
+        return AlpacaBroker()
+    from hermes.execution.paper_broker import PaperBroker
+    return PaperBroker()
+
+def _get_alerter():
+    from hermes.telegram.alerts import TelegramAlerter
+    return TelegramAlerter(
+        token=settings.hermes_telegram_bot_token,
+        chat_id=settings.hermes_telegram_chat_id,
+    )
+
 # ── Scheduler jobs ────────────────────────────────────────────
 
 async def _run_long_scan() -> None:
@@ -37,29 +54,93 @@ async def _run_intra_scan() -> None:
     from hermes.scanners.base import IntraScanner
     await IntraScanner().run_once()
 
+async def _run_kill_switch_check() -> None:
+    from hermes.risk.kill_switch import KillSwitch
+    broker = _get_broker()
+    alerter = _get_alerter()
+    await KillSwitch(broker=broker, config=settings, alerter=alerter).check()
+
+async def _run_daily_summary() -> None:
+    """Send daily summary Telegram message at market close."""
+    alerter = _get_alerter()
+    broker = _get_broker()
+    try:
+        account = await broker.get_account()
+        positions = await broker.get_positions()
+        await alerter.send_daily_summary([{
+            "name": "All Portfolios",
+            "open_positions": len(positions),
+            "today_pnl": account.today_pnl,
+            "equity": account.equity,
+        }])
+    except Exception:
+        logger.exception("Daily summary failed")
+
+# ── Event bus: wire scoring → portfolio manager ───────────────
+
+def _setup_event_subscribers() -> None:
+    """Wire SignalScored events to the portfolio manager."""
+    from hermes.events.types import SignalDetected, SignalScored
+    from hermes.portfolio.manager import PortfolioManager
+    from hermes.scoring.rule_scorer import RuleScorer
+
+    broker = _get_broker()
+    alerter = _get_alerter()
+    pm = PortfolioManager(broker=broker, config=settings)  # type: ignore[arg-type]
+    RuleScorer()
+
+    @bus.subscribe(SignalDetected)
+    async def on_detected(event) -> None:  # type: ignore[type-arg]
+        """Score every detected signal and publish SignalScored."""
+
+        from hermes.events.types import SignalScored
+        score = 2  # default — full scoring needs live df (Phase 6 enhancement)
+        scored = SignalScored(
+            signal_id=event.event_id,
+            symbol=event.symbol,
+            portfolio=event.portfolio,
+            direction=event.direction,
+            setup_name=event.setup_name,
+            confluence_score=score,
+            entry_price=event.entry_price,
+            stop_price=event.stop_price,
+            target_price=event.target_price,
+            features=event.features,
+        )
+        await bus.publish(scored)
+
+    @bus.subscribe(SignalScored)
+    async def on_scored(event) -> None:  # type: ignore[type-arg]
+        """Route scored signals to portfolio manager and Telegram."""
+        await pm.on_signal_scored(event)
+        # HIGH signals get immediate Telegram alert
+        if event.confluence_score >= 3:
+            await alerter.send_signal_alert(event, event.symbol)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Hermes starting up (env=%s)", settings.hermes_env)
+    logger.info("Hermes starting up (env=%s, phase=5)", settings.hermes_env)
 
     # Event bus
     bus_task = asyncio.create_task(bus.run(), name="event-bus")
 
+    # Wire event subscribers
+    _setup_event_subscribers()
+
     # Scheduler
     scheduler = AsyncIOScheduler(timezone="UTC")
 
-    # Long: weekly Sunday 18:00 UTC
+    # Scanners
     scheduler.add_job(_run_long_scan, CronTrigger(day_of_week="sun", hour=18, minute=0))
-    # Mid: weekdays at market close per region (start with US close 21:00 UTC)
     scheduler.add_job(_run_mid_scan, CronTrigger(day_of_week="mon-fri", hour=21, minute=15))
-    # Intra: every 15 min, US market hours Mon-Fri 13:30-20:00 UTC
-    scheduler.add_job(
-        _run_intra_scan,
-        IntervalTrigger(minutes=15),
-        id="intra_scan",
-    )
+    scheduler.add_job(_run_intra_scan, IntervalTrigger(minutes=15), id="intra_scan")
     # Outcome tracker: every hour
     scheduler.add_job(run_outcome_check, IntervalTrigger(hours=1), id="outcome_tracker")
+    # Kill switch check: every 5 min
+    scheduler.add_job(_run_kill_switch_check, IntervalTrigger(minutes=5), id="kill_switch")
+    # Daily summary: weekdays 21:05 UTC (just after US close)
+    scheduler.add_job(_run_daily_summary, CronTrigger(day_of_week="mon-fri", hour=21, minute=5))
 
     if settings.hermes_env != "test":
         scheduler.start()
@@ -67,7 +148,7 @@ async def lifespan(app: FastAPI):
 
     logger.info(
         "Alpaca: %s | Telegram: %s | Halted: %s",
-        "configured" if settings.alpaca_configured else "not configured",
+        "configured" if settings.alpaca_configured else "not configured (PaperBroker)",
         "configured" if settings.telegram_configured else "not configured",
         settings.hermes_halted,
     )
@@ -109,24 +190,26 @@ async def health() -> dict:
     return {
         "status": "ok",
         "version": "0.1.0",
+        "phase": "5 — Paper Trading",
         "env": settings.hermes_env,
         "halted": settings.hermes_halted,
         "alpaca_configured": settings.alpaca_configured,
         "telegram_configured": settings.telegram_configured,
+        "broker": "alpaca_paper" if settings.alpaca_configured else "paper_broker",
     }
 
 
 @app.get("/api/status", tags=["system"])
 async def status() -> dict:
     return {
-        "phase": "2 — Indicators + Setups + Scoring",
-        "message": "Scanners wired. Three portfolios: long (weekly), mid (daily), intra (15 min).",
+        "phase": "5 — Paper Trading via Alpaca",
+        "message": "Scanners + scoring + execution wired. Fill in .env to activate Alpaca.",
     }
 
 
 @app.post("/api/scan/{portfolio}", tags=["scanner"])
 async def trigger_scan(portfolio: str) -> dict:
-    """Manually trigger a scan for testing (dev only)."""
+    """Manually trigger a scan (dev/testing)."""
     if portfolio == "long":
         asyncio.create_task(_run_long_scan())
     elif portfolio == "mid":
@@ -136,6 +219,49 @@ async def trigger_scan(portfolio: str) -> dict:
     else:
         return {"error": f"Unknown portfolio: {portfolio}"}
     return {"status": "scan_triggered", "portfolio": portfolio}
+
+
+@app.get("/api/broker/account", tags=["broker"])
+async def broker_account() -> dict:
+    """Live account info from the configured broker."""
+    try:
+        broker = _get_broker()
+        account = await broker.get_account()
+        return {
+            "broker": broker.name,
+            "equity": account.equity,
+            "cash": account.cash,
+            "buying_power": account.buying_power,
+            "today_pnl": account.today_pnl,
+            "today_pnl_pct": account.today_pnl_pct,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/broker/positions", tags=["broker"])
+async def broker_positions() -> dict:
+    """Live open positions from the configured broker."""
+    try:
+        broker = _get_broker()
+        positions = await broker.get_positions()
+        return {
+            "broker": broker.name,
+            "count": len(positions),
+            "positions": [
+                {
+                    "symbol": p.symbol,
+                    "qty": p.qty,
+                    "avg_entry": p.avg_entry_price,
+                    "current_price": p.current_price,
+                    "unrealised_pnl": p.unrealised_pnl,
+                    "side": p.side,
+                }
+                for p in positions
+            ],
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # ── Entry point ───────────────────────────────────────────────
