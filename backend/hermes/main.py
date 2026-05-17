@@ -12,6 +12,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from hermes.api.performance import router as performance_router
+from hermes.api.portfolios import router as portfolios_router
+from hermes.api.signals import router as signals_router
 from hermes.config import settings
 from hermes.events.bus import bus
 from hermes.outcome.tracker import run_outcome_check
@@ -96,6 +98,8 @@ app.add_middleware(
 )
 
 app.include_router(performance_router)
+app.include_router(signals_router)
+app.include_router(portfolios_router)
 
 
 # ── Routes ────────────────────────────────────────────────────
