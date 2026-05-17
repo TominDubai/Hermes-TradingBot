@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# uv
+.python-version
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Frontend
+node_modules/
+frontend/.svelte-kit/
+frontend/build/
+frontend/dist/
+.svelte-kit/
+
+# Data
+data/v1-archive.csv
+*.db
+*.sqlite
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Ops
+ops/secrets/
