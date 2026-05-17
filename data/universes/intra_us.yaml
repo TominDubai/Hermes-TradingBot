@@ -1,0 +1,123 @@
+name: intra_us
+description: >
+  Top 100 US stocks by average daily dollar volume — highest-liquidity names
+  for intraday scanning. All names trade well above $100M/day in dollar volume.
+provider: yfinance
+timeframe: 5m
+scan_frequency: daily
+min_dollar_volume: 100000000  # $100M daily minimum
+symbols:
+  # Mega-cap tech — highest dollar volume in the market
+  - AAPL    # Apple — typically #1 by dollar volume
+  - MSFT    # Microsoft
+  - NVDA    # NVIDIA — extremely active on AI momentum
+  - AMZN    # Amazon
+  - TSLA    # Tesla — highest retail activity
+  - GOOGL   # Alphabet A
+  - META    # Meta Platforms
+  - AMD     # Advanced Micro Devices
+  - AVGO    # Broadcom
+  - ORCL    # Oracle
+  # High-beta tech
+  - CRM     # Salesforce
+  - ADBE    # Adobe
+  - INTC    # Intel
+  - QCOM    # Qualcomm
+  - MU      # Micron
+  - AMAT    # Applied Materials
+  - LRCX    # Lam Research
+  - KLAC    # KLA
+  - TXN     # Texas Instruments
+  - PANW    # Palo Alto Networks
+  # Financials — large float, high activity
+  - JPM     # JPMorgan Chase
+  - BAC     # Bank of America
+  - C       # Citigroup
+  - WFC     # Wells Fargo
+  - GS      # Goldman Sachs
+  - MS      # Morgan Stanley
+  - V       # Visa
+  - MA      # Mastercard
+  - SCHW    # Charles Schwab
+  - AXP     # American Express
+  # Healthcare — catalyst-driven movers
+  - LLY     # Eli Lilly
+  - UNH     # UnitedHealth
+  - JNJ     # Johnson & Johnson
+  - ABBV    # AbbVie
+  - MRK     # Merck
+  - PFE     # Pfizer
+  - AMGN    # Amgen
+  - GILD    # Gilead Sciences
+  - BIIB    # Biogen
+  - ISRG    # Intuitive Surgical
+  # Consumer Discretionary
+  - HD      # Home Depot
+  - MCD     # McDonald's
+  - NKE     # Nike
+  - SBUX    # Starbucks
+  - LOW     # Lowe's
+  - TJX     # TJX Companies
+  - BKNG    # Booking Holdings
+  - GM      # General Motors
+  - F       # Ford Motor
+  - EBAY    # eBay
+  # Consumer Staples
+  - WMT     # Walmart
+  - PG      # Procter & Gamble
+  - KO      # Coca-Cola
+  - PEP     # PepsiCo
+  - COST    # Costco
+  - PM      # Philip Morris
+  - MO      # Altria
+  # Industrials
+  - GE      # GE Aerospace
+  - BA      # Boeing
+  - CAT     # Caterpillar
+  - HON     # Honeywell
+  - RTX     # RTX Corporation
+  - UPS     # United Parcel Service
+  - LMT     # Lockheed Martin
+  - DE      # Deere
+  - FDX     # FedEx
+  - DAL     # Delta Air Lines
+  # Energy
+  - XOM     # ExxonMobil
+  - CVX     # Chevron
+  - COP     # ConocoPhillips
+  - EOG     # EOG Resources
+  - SLB     # Schlumberger
+  - OXY     # Occidental Petroleum
+  - DVN     # Devon Energy
+  - HAL     # Halliburton
+  - MPC     # Marathon Petroleum
+  - PSX     # Phillips 66
+  # Communication Services
+  - NFLX    # Netflix
+  - DIS     # Walt Disney
+  - CMCSA   # Comcast
+  - T       # AT&T
+  - VZ      # Verizon
+  - TMUS    # T-Mobile
+  # ETFs — extremely high dollar volume, great for gauging sector sentiment
+  - SPY     # SPDR S&P 500 ETF
+  - QQQ     # Invesco QQQ (Nasdaq-100)
+  - IWM     # iShares Russell 2000 ETF
+  - GLD     # SPDR Gold ETF
+  - SLV     # iShares Silver ETF
+  - TLT     # iShares 20+ Year Treasury ETF
+  - HYG     # iShares iBoxx High Yield ETF
+  - XLE     # Energy Select SPDR
+  - XLF     # Financial Select SPDR
+  - XLK     # Technology Select SPDR
+  # High-volatility / popular traders
+  - RIVN    # Rivian Automotive
+  - LCID    # Lucid Group
+  - PLTR    # Palantir Technologies
+  - SOFI    # SoFi Technologies
+  - HOOD    # Robinhood Markets
+  - COIN    # Coinbase Global
+  - MSTR    # MicroStrategy
+  - ROKU    # Roku
+  - SNOW    # Snowflake
+  - RBLX    # Roblox

@@ -1,0 +1,123 @@
+name: long_us
+description: US large-cap equities — S&P 500 top 100 by market cap
+provider: yfinance
+timeframe: 1d
+scan_frequency: weekly
+symbols:
+  # Technology
+  - AAPL    # Apple
+  - MSFT    # Microsoft
+  - NVDA    # NVIDIA
+  - GOOGL   # Alphabet Class A
+  - GOOG    # Alphabet Class C
+  - META    # Meta Platforms
+  - AVGO    # Broadcom
+  - ORCL    # Oracle
+  - CSCO    # Cisco Systems
+  - ADBE    # Adobe
+  - CRM     # Salesforce
+  - AMD     # Advanced Micro Devices
+  - INTC    # Intel
+  - QCOM    # Qualcomm
+  - TXN     # Texas Instruments
+  - AMAT    # Applied Materials
+  - INTU    # Intuit
+  - MU      # Micron Technology
+  - LRCX    # Lam Research
+  - KLAC    # KLA Corporation
+  # Consumer Discretionary
+  - AMZN    # Amazon
+  - TSLA    # Tesla
+  - HD      # Home Depot
+  - MCD     # McDonald's
+  - NKE     # Nike
+  - SBUX    # Starbucks
+  - TJX     # TJX Companies
+  - LOW     # Lowe's
+  - BKNG    # Booking Holdings
+  - MAR     # Marriott International
+  # Financials
+  - BRK-B   # Berkshire Hathaway Class B
+  - JPM     # JPMorgan Chase
+  - V       # Visa
+  - MA      # Mastercard
+  - BAC     # Bank of America
+  - WFC     # Wells Fargo
+  - GS      # Goldman Sachs
+  - MS      # Morgan Stanley
+  - BLK     # BlackRock
+  - AXP     # American Express
+  - C       # Citigroup
+  - SCHW    # Charles Schwab
+  - CB      # Chubb
+  - PGR     # Progressive
+  - USB     # U.S. Bancorp
+  # Healthcare
+  - LLY     # Eli Lilly
+  - UNH     # UnitedHealth Group
+  - JNJ     # Johnson & Johnson
+  - ABBV    # AbbVie
+  - MRK     # Merck
+  - TMO     # Thermo Fisher Scientific
+  - ABT     # Abbott Laboratories
+  - DHR     # Danaher
+  - PFE     # Pfizer
+  - AMGN    # Amgen
+  - MDT     # Medtronic
+  - SYK     # Stryker
+  - ELV     # Elevance Health
+  - CI      # Cigna
+  # Communication Services
+  - NFLX    # Netflix
+  - DIS     # Walt Disney
+  - CMCSA   # Comcast
+  - T       # AT&T
+  - VZ      # Verizon
+  - TMUS    # T-Mobile US
+  - EA      # Electronic Arts
+  - TTWO    # Take-Two Interactive
+  # Consumer Staples
+  - WMT     # Walmart
+  - PG      # Procter & Gamble
+  - KO      # Coca-Cola
+  - PEP     # PepsiCo
+  - COST    # Costco Wholesale
+  - PM      # Philip Morris
+  - MO      # Altria Group
+  - CL      # Colgate-Palmolive
+  - MDLZ    # Mondelez International
+  - KHC     # Kraft Heinz
+  # Industrials
+  - GE      # GE Aerospace
+  - CAT     # Caterpillar
+  - HON     # Honeywell
+  - UPS     # United Parcel Service
+  - BA      # Boeing
+  - RTX     # RTX Corporation
+  - DE      # Deere & Company
+  - LMT     # Lockheed Martin
+  - GD      # General Dynamics
+  - NOC     # Northrop Grumman
+  - FDX     # FedEx
+  - EMR     # Emerson Electric
+  # Energy
+  - XOM     # ExxonMobil
+  - CVX     # Chevron
+  - COP     # ConocoPhillips
+  - EOG     # EOG Resources
+  - SLB     # Schlumberger
+  - PSX     # Phillips 66
+  - VLO     # Valero Energy
+  # Materials
+  - LIN     # Linde
+  - APD     # Air Products
+  - SHW     # Sherwin-Williams
+  - FCX     # Freeport-McMoRan
+  # Real Estate
+  - PLD     # Prologis
+  - AMT     # American Tower
+  - EQIX    # Equinix
+  # Utilities
+  - NEE     # NextEra Energy
+  - DUK     # Duke Energy
+  - SO      # Southern Company

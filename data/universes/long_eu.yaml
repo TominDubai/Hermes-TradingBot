@@ -1,0 +1,63 @@
+name: long_eu
+description: EuroStoxx 50 blue-chip equities — all 50 constituents with yfinance suffixes
+provider: yfinance
+timeframe: 1d
+scan_frequency: weekly
+symbols:
+  # Germany (.DE)
+  - ADS.DE     # Adidas
+  - AIR.DE     # Airbus (also listed as AIR.PA)
+  - ALV.DE     # Allianz
+  - BASFN.DE   # BASF
+  - BBVA.DE    # Banco Bilbao (primary: BBVA.MC)
+  - BMW.DE     # BMW
+  - BNR.DE     # Brenntag
+  - CBK.DE     # Commerzbank
+  - CON.DE     # Continental
+  - DAI.DE     # Mercedes-Benz (ticker: MBG.DE)
+  - MBG.DE     # Mercedes-Benz Group
+  - DB1.DE     # Deutsche Börse
+  - DBK.DE     # Deutsche Bank
+  - DHL.DE     # DHL Group (formerly Deutsche Post)
+  - DTE.DE     # Deutsche Telekom
+  - EOAN.DE    # E.ON
+  - FME.DE     # Fresenius Medical Care
+  - FRE.DE     # Fresenius
+  - HEI.DE     # HeidelbergCement (now Heidelberg Materials: HLBZF)
+  - HEN3.DE    # Henkel
+  - IFX.DE     # Infineon Technologies
+  - MUV2.DE    # Munich Re
+  - RWE.DE     # RWE
+  - SAP.DE     # SAP
+  - SHL.DE     # Siemens Healthineers
+  - SIE.DE     # Siemens
+  - SY1.DE     # Symrise
+  - VOW3.DE    # Volkswagen Preferred
+  # France (.PA)
+  - AC.PA      # Accor
+  - AIR.PA     # Airbus
+  - BN.PA      # Danone
+  - BNP.PA     # BNP Paribas
+  - CA.PA      # Carrefour
+  - CS.PA      # AXA
+  - DSY.PA     # Dassault Systemes
+  - EL.PA      # EssilorLuxottica
+  - ENGI.PA    # Engie
+  - KER.PA     # Kering
+  - LR.PA      # Legrand
+  - MC.PA      # LVMH
+  - ML.PA      # Michelin
+  - OR.PA      # L'Oreal
+  - ORA.PA     # Orange
+  - RI.PA      # Pernod Ricard
+  - SAN.PA     # Sanofi
+  - SGO.PA     # Saint-Gobain
+  - STMPA.PA   # STMicroelectronics
+  - TTE.PA     # TotalEnergies
+  # Netherlands (.AS)
+  - ASML.AS    # ASML Holding
+  - HEIA.AS    # Heineken
+  - NN.AS      # NN Group
+  - PHIA.AS    # Philips
+  - RAND.AS    # Randstad
+  - URW.AS     # Unibail-Rodamco-Westfield

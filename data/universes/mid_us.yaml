@@ -1,0 +1,215 @@
+name: mid_us
+description: Russell 1000 representative sample — 200 tickers across all sectors
+provider: yfinance
+timeframe: 1d
+scan_frequency: weekly
+symbols:
+  # Technology (40 names)
+  - AAPL    # Apple
+  - MSFT    # Microsoft
+  - NVDA    # NVIDIA
+  - GOOGL   # Alphabet A
+  - META    # Meta Platforms
+  - AVGO    # Broadcom
+  - ORCL    # Oracle
+  - CSCO    # Cisco
+  - ADBE    # Adobe
+  - CRM     # Salesforce
+  - AMD     # Advanced Micro Devices
+  - INTC    # Intel
+  - QCOM    # Qualcomm
+  - TXN     # Texas Instruments
+  - AMAT    # Applied Materials
+  - INTU    # Intuit
+  - MU      # Micron
+  - LRCX    # Lam Research
+  - KLAC    # KLA
+  - PANW    # Palo Alto Networks
+  - SNPS    # Synopsys
+  - CDNS    # Cadence Design
+  - MRVL    # Marvell Technology
+  - WDAY    # Workday
+  - FTNT    # Fortinet
+  - ROP     # Roper Technologies
+  - ANSS    # ANSYS
+  - KEYS    # Keysight Technologies
+  - TRMB    # Trimble
+  - EPAM    # EPAM Systems
+  - CTSH    # Cognizant
+  - HPQ     # HP Inc
+  - HPE     # Hewlett Packard Enterprise
+  - WDC     # Western Digital
+  - STX     # Seagate Technology
+  - ZBRA    # Zebra Technologies
+  - JNPR    # Juniper Networks
+  - SWKS    # Skyworks Solutions
+  - QRVO    # Qorvo
+  - AKAM    # Akamai Technologies
+  # Consumer Discretionary (30 names)
+  - AMZN    # Amazon
+  - TSLA    # Tesla
+  - HD      # Home Depot
+  - MCD     # McDonald's
+  - NKE     # Nike
+  - SBUX    # Starbucks
+  - TJX     # TJX Companies
+  - LOW     # Lowe's
+  - BKNG    # Booking Holdings
+  - MAR     # Marriott
+  - GM      # General Motors
+  - F       # Ford Motor
+  - EBAY    # eBay
+  - ETSY    # Etsy
+  - ROST    # Ross Stores
+  - DHI     # D.R. Horton
+  - LEN     # Lennar
+  - PHM     # PulteGroup
+  - BBY     # Best Buy
+  - DRI     # Darden Restaurants
+  - YUM     # Yum! Brands
+  - CMG     # Chipotle Mexican Grill
+  - HLT     # Hilton Worldwide
+  - H       # Hyatt Hotels
+  - CCL     # Carnival Corporation
+  - RCL     # Royal Caribbean
+  - NCLH    # Norwegian Cruise Line
+  - LCID    # Lucid Group
+  - RIVN    # Rivian Automotive
+  - APTV    # Aptiv
+  # Financials (30 names)
+  - BRK-B   # Berkshire Hathaway B
+  - JPM     # JPMorgan Chase
+  - V       # Visa
+  - MA      # Mastercard
+  - BAC     # Bank of America
+  - WFC     # Wells Fargo
+  - GS      # Goldman Sachs
+  - MS      # Morgan Stanley
+  - BLK     # BlackRock
+  - AXP     # American Express
+  - C       # Citigroup
+  - SCHW    # Charles Schwab
+  - CB      # Chubb
+  - PGR     # Progressive
+  - USB     # U.S. Bancorp
+  - TFC     # Truist Financial
+  - PNC     # PNC Financial
+  - ICE     # Intercontinental Exchange
+  - CME     # CME Group
+  - SPGI    # S&P Global
+  - MCO     # Moody's
+  - FIS     # Fidelity National Information
+  - FISV    # Fiserv
+  - AFL     # Aflac
+  - MET     # MetLife
+  - PRU     # Prudential Financial
+  - AON     # Aon
+  - MMC     # Marsh & McLennan
+  - WTW     # Willis Towers Watson
+  - CINF    # Cincinnati Financial
+  # Healthcare (30 names)
+  - LLY     # Eli Lilly
+  - UNH     # UnitedHealth
+  - JNJ     # Johnson & Johnson
+  - ABBV    # AbbVie
+  - MRK     # Merck
+  - TMO     # Thermo Fisher
+  - ABT     # Abbott Labs
+  - DHR     # Danaher
+  - PFE     # Pfizer
+  - AMGN    # Amgen
+  - MDT     # Medtronic
+  - SYK     # Stryker
+  - ELV     # Elevance Health
+  - CI      # Cigna
+  - BSX     # Boston Scientific
+  - ISRG    # Intuitive Surgical
+  - ZBH     # Zimmer Biomet
+  - BDX     # Becton Dickinson
+  - BAX     # Baxter International
+  - HOLX    # Hologic
+  - IDXX    # IDEXX Laboratories
+  - VTRS    # Viatris
+  - HUM     # Humana
+  - CAH     # Cardinal Health
+  - MCK     # McKesson
+  - ABC     # AmerisourceBergen
+  - HSIC    # Henry Schein
+  - PDCO    # Patterson Companies
+  - GILD    # Gilead Sciences
+  - BIIB    # Biogen
+  # Industrials (25 names)
+  - GE      # GE Aerospace
+  - CAT     # Caterpillar
+  - HON     # Honeywell
+  - UPS     # United Parcel Service
+  - BA      # Boeing
+  - RTX     # RTX
+  - DE      # Deere
+  - LMT     # Lockheed Martin
+  - GD      # General Dynamics
+  - NOC     # Northrop Grumman
+  - FDX     # FedEx
+  - EMR     # Emerson Electric
+  - ETN     # Eaton
+  - PH      # Parker Hannifin
+  - ROK     # Rockwell Automation
+  - IR      # Ingersoll Rand
+  - AME     # AMETEK
+  - XYL     # Xylem
+  - CARR    # Carrier Global
+  - OTIS    # Otis Worldwide
+  - EXPD    # Expeditors International
+  - CHRW    # CH Robinson
+  - DAL     # Delta Air Lines
+  - UAL     # United Airlines
+  - AAL     # American Airlines
+  # Energy (15 names)
+  - XOM     # ExxonMobil
+  - CVX     # Chevron
+  - COP     # ConocoPhillips
+  - EOG     # EOG Resources
+  - SLB     # Schlumberger
+  - PSX     # Phillips 66
+  - VLO     # Valero Energy
+  - MPC     # Marathon Petroleum
+  - HES     # Hess Corporation
+  - DVN     # Devon Energy
+  - FANG    # Diamondback Energy
+  - APA     # APA Corporation
+  - HAL     # Halliburton
+  - BKR     # Baker Hughes
+  - OXY     # Occidental Petroleum
+  # Materials (10 names)
+  - LIN     # Linde
+  - APD     # Air Products
+  - SHW     # Sherwin-Williams
+  - FCX     # Freeport-McMoRan
+  - NEM     # Newmont
+  - ALB     # Albemarle
+  - CE      # Celanese
+  - EMN     # Eastman Chemical
+  - RPM     # RPM International
+  - FMC     # FMC Corporation
+  # Real Estate (10 names)
+  - PLD     # Prologis
+  - AMT     # American Tower
+  - EQIX    # Equinix
+  - SPG     # Simon Property Group
+  - O       # Realty Income
+  - VICI    # VICI Properties
+  - WY      # Weyerhaeuser
+  - AVB     # AvalonBay Communities
+  - EQR     # Equity Residential
+  - PSA     # Public Storage
+  # Utilities (10 names)
+  - NEE     # NextEra Energy
+  - DUK     # Duke Energy
+  - SO      # Southern Company
+  - D       # Dominion Energy
+  - AEP     # American Electric Power
+  - EXC     # Exelon
+  - XEL     # Xcel Energy
+  - WEC     # WEC Energy
+  - ES      # Eversource Energy
+  - ETR     # Entergy
