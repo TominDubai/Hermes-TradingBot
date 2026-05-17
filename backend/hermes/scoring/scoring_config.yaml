@@ -1,0 +1,51 @@
+# Hermes scoring weights — tune here without touching code.
+#
+# confluence_factors: each factor adds +1 to the confluence score (max 6).
+# A signal needs score >= min_confluence to be logged (set in config.py).
+#
+# min_confluence per portfolio:
+#   long:  2  (weekly scan, higher bar)
+#   mid:   2
+#   intra: 2  (speed matters but still need confirmation)
+
+confluence_factors:
+
+  # ── Trend alignment ──────────────────────────────────────────
+  trend_aligned:
+    description: "Price above/below key EMA (50 for intra, 200 for long/mid)"
+    weight: 1
+
+  higher_timeframe_aligned:
+    description: "Weekly trend confirms daily signal direction"
+    weight: 1
+
+  # ── Momentum ─────────────────────────────────────────────────
+  rsi_in_zone:
+    description: "RSI in bullish zone (40-70 long, 30-60 mean reversion)"
+    weight: 1
+
+  macd_confirming:
+    description: "MACD histogram positive (long) or crossing up (intra)"
+    weight: 1
+
+  # ── Volume ───────────────────────────────────────────────────
+  volume_confirming:
+    description: "Volume above 20-period average on breakout/entry bar"
+    weight: 1
+
+  # ── Volatility / structure ────────────────────────────────────
+  atr_range_valid:
+    description: "ATR within acceptable range (not too compressed, not spiking)"
+    weight: 1
+
+# Scoring thresholds
+thresholds:
+  low:    1   # ignored entirely (below min_confluence)
+  medium: 2   # logged, Telegram morning/EOD summary
+  high:   3   # immediate Telegram alert
+
+# Per-portfolio minimum R:R to log a signal
+min_rr:
+  long:  3.0
+  mid:   1.5
+  intra: 1.2
