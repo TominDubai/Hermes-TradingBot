@@ -283,6 +283,50 @@ async def debug_scan() -> dict:
     return results
 
 
+@app.get("/api/debug/price/{symbol}", tags=["debug"])
+async def debug_price(symbol: str) -> dict:
+    """Debug price data for a specific symbol."""
+    try:
+        from hermes.data.yfinance_provider import YFinanceProvider
+        from hermes.data.base import Timeframe
+        from datetime import date, timedelta
+        
+        provider = YFinanceProvider()
+        end = date.today()
+        start = end - timedelta(days=10)
+        
+        # Get recent data
+        df = await provider.get_ohlcv(symbol, Timeframe.DAILY, start, end)
+        
+        if df.empty:
+            return {"status": "no_data", "symbol": symbol}
+        
+        # Extract key info
+        latest = df.iloc[-1]
+        
+        return {
+            "status": "success",
+            "symbol": symbol,
+            "data_points": len(df),
+            "date_range": f"{df.index[0].date()} to {df.index[-1].date()}",
+            "latest_date": str(df.index[-1].date()),
+            "latest_ohlc": {
+                "open": float(latest['Open']),
+                "high": float(latest['High']), 
+                "low": float(latest['Low']),
+                "close": float(latest['Close']),
+                "volume": int(latest['Volume'])
+            },
+            "price_range_10d": {
+                "min": float(df['Low'].min()),
+                "max": float(df['High'].max()),
+                "avg_close": float(df['Close'].mean())
+            }
+        }
+    except Exception as e:
+        return {"status": "error", "symbol": symbol, "error": str(e)}
+
+
 @app.get("/api/broker/account", tags=["broker"])
 async def broker_account() -> dict:
     """Live account info from the configured broker."""
