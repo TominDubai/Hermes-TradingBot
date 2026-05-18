@@ -221,6 +221,68 @@ async def trigger_scan(portfolio: str) -> dict:
     return {"status": "scan_triggered", "portfolio": portfolio}
 
 
+@app.get("/api/debug/scan", tags=["debug"])
+async def debug_scan() -> dict:
+    """Debug the scanning pipeline step by step."""
+    results = {}
+    
+    # Test 1: Universe loading
+    try:
+        from hermes.data.universe import load_universe
+        universe = load_universe("mid_us")
+        results["universe"] = {
+            "status": "success",
+            "symbols_count": len(universe.symbols),
+            "first_3_symbols": universe.symbols[:3],
+            "provider": universe.provider
+        }
+    except Exception as e:
+        results["universe"] = {"status": "error", "error": str(e)}
+    
+    # Test 2: Data provider
+    try:
+        from hermes.data.yfinance_provider import YFinanceProvider
+        from datetime import date, timedelta
+        provider = YFinanceProvider()
+        end = date.today()
+        start = end - timedelta(days=30)
+        from hermes.data.base import Timeframe
+        df = await provider.get_ohlcv("AAPL", Timeframe.DAILY, start, end)
+        results["data_provider"] = {
+            "status": "success" if not df.empty else "empty_data",
+            "rows": len(df),
+            "columns": list(df.columns) if not df.empty else [],
+            "date_range": f"{df.index[0]} to {df.index[-1]}" if not df.empty else "no data"
+        }
+    except Exception as e:
+        results["data_provider"] = {"status": "error", "error": str(e)}
+    
+    # Test 3: Setup detection
+    try:
+        from hermes.scanners.base import MidScanner
+        scanner = MidScanner()
+        results["scanner"] = {
+            "status": "success",
+            "setups_count": len(scanner.setups),
+            "setup_names": [type(s).__name__ for s in scanner.setups]
+        }
+    except Exception as e:
+        results["scanner"] = {"status": "error", "error": str(e)}
+    
+    # Test 4: Event bus
+    try:
+        from hermes.events.bus import bus
+        results["event_bus"] = {
+            "status": "success",
+            "is_running": hasattr(bus, '_running') and bus._running,
+            "subscriber_count": len(getattr(bus, '_subscribers', {}))
+        }
+    except Exception as e:
+        results["event_bus"] = {"status": "error", "error": str(e)}
+    
+    return results
+
+
 @app.get("/api/broker/account", tags=["broker"])
 async def broker_account() -> dict:
     """Live account info from the configured broker."""
