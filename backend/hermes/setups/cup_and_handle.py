@@ -10,7 +10,9 @@ from hermes.setups.base import Setup, SetupResult
 class CupAndHandle(Setup):
     """
     Classic cup-and-handle pattern on daily bars.
-    Looks for a U-shaped consolidation followed by a shallow handle and breakout.
+    Phase 6 tuning: cup depth relaxed to 10% (from 15%), handle depth
+    widened to 3-20% (from 5-15%), volume threshold lowered to 1.2x,
+    RSI range widened to 45-80.
     """
 
     name = "cup_and_handle"
@@ -38,24 +40,24 @@ class CupAndHandle(Setup):
         cup_window = close.iloc[-90:-20]
         cup_bottom = float(cup_window.min())
 
-        # Cup depth
+        # Cup depth: relaxed from 15% to 10%
         cup_depth = left_rim_price - cup_bottom
         cup_depth_pct = cup_depth / left_rim_price
-        if cup_depth_pct < 0.15:
+        if cup_depth_pct < 0.10:
             return None
 
-        # Right rim: close within 3% of left rim in last 20 bars
+        # Right rim: close within 5% of left rim in last 20 bars (relaxed from 3%)
         right_window = close.iloc[-20:]
-        right_rim_prices = right_window[right_window >= left_rim_price * 0.97]
+        right_rim_prices = right_window[right_window >= left_rim_price * 0.95]
         if right_rim_prices.empty:
             return None
         right_rim_price = float(right_rim_prices.iloc[0])
 
-        # Handle: shallow pullback 5-15% after right rim, at least 3 bars
+        # Handle: shallow pullback 3-20% (widened from 5-15%)
         handle_window = close.iloc[-15:]
         handle_low = float(handle_window.min())
         handle_depth_pct = (right_rim_price - handle_low) / right_rim_price
-        if not (0.05 <= handle_depth_pct <= 0.15):
+        if not (0.03 <= handle_depth_pct <= 0.20):
             return None
 
         # Breakout: last bar close > right rim high
@@ -64,14 +66,15 @@ class CupAndHandle(Setup):
         if c <= right_high * 0.999:
             return None
 
-        # Volume and RSI confirmation
+        # Volume: lowered to 1.2x (from 1.5x)
         vol_avg = float(volume.iloc[-20:].mean())
         vol_ratio = float(volume.iloc[-1]) / vol_avg if vol_avg > 0 else 0.0
-        if vol_ratio < 1.5:
+        if vol_ratio < 1.2:
             return None
 
+        # RSI: widened to 45-80 (from 50-75)
         rsi_val = float(rsi14.iloc[-1])
-        if not (50 <= rsi_val <= 75):
+        if not (45 <= rsi_val <= 80):
             return None
 
         # Entry / stop / target
@@ -82,7 +85,7 @@ class CupAndHandle(Setup):
         risk = entry - stop
         if risk <= 0:
             return None
-        target = entry + cup_depth  # measured move
+        target = entry + cup_depth
 
         return SetupResult(
             score=0.75,

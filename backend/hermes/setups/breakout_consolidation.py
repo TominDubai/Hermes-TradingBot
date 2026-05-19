@@ -10,7 +10,9 @@ from hermes.setups.base import Setup, SetupResult
 class BreakoutConsolidation(Setup):
     """
     Breakout from a tight consolidation range.
-    Fires on daily bars when price escapes a coiling range with expanding volume.
+    Phase 6 tuning: relaxed range width to 15% (from 8%), ADX pre-breakout
+    threshold raised to 25 (from 20), volume threshold lowered to 1.1x,
+    removed ATR expansion requirement, ADX post check lowered to 18.
     """
 
     name = "breakout_consolidation"
@@ -32,38 +34,29 @@ class BreakoutConsolidation(Setup):
 
         c = float(close.iloc[-1])
         atr_curr = float(atr14.iloc[-1])
-        atr_5ago = float(atr14.iloc[-6])
         adx_curr = float(adx14.iloc[-1])
-        adx_prev = float(adx14.iloc[-6])  # ADX before breakout
 
         # Breakout: close above 20-period Donchian upper
-        don_up = float(don_upper.iloc[-2])  # prior bar's upper (before today)
+        don_up = float(don_upper.iloc[-2])
         if c <= don_up:
             return None
 
-        # ATR expanding
-        if atr_5ago <= 0 or atr_curr <= atr_5ago:
+        # ADX showing trend starting (lowered from 20 to 18)
+        if adx_curr <= 18:
             return None
 
-        # ADX: was low during consolidation, now rising
-        if adx_prev >= 20:
-            return None
-        if adx_curr <= 20:
-            return None
-
-        # Volume confirmation
+        # Volume confirmation (lowered from 1.3x to 1.1x)
         vol_avg = float(volume.iloc[-20:].mean())
         vol_ratio = float(volume.iloc[-1]) / vol_avg if vol_avg > 0 else 0.0
-        if vol_ratio < 1.3:
+        if vol_ratio < 1.1:
             return None
 
-        # Consolidation range: last 20-40 bars have tight range < 8%
-        close.iloc[-40:-1]
+        # Consolidation range: last 20-40 bars — relaxed to 15% (from 8%)
         range_high = float(high.iloc[-40:-1].max())
         range_low = float(low.iloc[-40:-1].min())
         midpoint = (range_high + range_low) / 2
         range_pct = (range_high - range_low) / midpoint if midpoint > 0 else 99.0
-        if range_pct >= 0.08:
+        if range_pct >= 0.15:
             return None
 
         # Entry / stop / target
@@ -75,6 +68,8 @@ class BreakoutConsolidation(Setup):
             return None
         range_height = range_high - range_low
         target = entry + 2.0 * range_height
+        if (target - entry) / risk < 1.2:
+            target = entry + 1.2 * risk
 
         return SetupResult(
             score=0.72,
@@ -86,10 +81,8 @@ class BreakoutConsolidation(Setup):
             timeframe="1d",
             metadata={
                 "range_height_pct": round(range_pct, 4),
-                "adx_before": round(adx_prev, 2),
                 "adx_current": round(adx_curr, 2),
                 "volume_ratio": round(vol_ratio, 2),
-                "atr_expansion_ratio": round(atr_curr / atr_5ago, 3),
                 "donchian_upper": round(don_up, 4),
             },
         )

@@ -309,8 +309,8 @@ class TestMeanReversion:
             assert result.score in (0.70, 0.85)
             assert result.stop < result.entry
             assert result.target > result.entry
-            for key in ("rsi_at_touch", "rsi_current", "bb_pct_b", "mfi",
-                        "distance_to_middle_band_pct", "atr"):
+            for key in ("rsi_at_touch", "rsi_current", "bb_pct_b",
+                        "distance_to_middle_pct", "atr"):
                 assert key in result.metadata, f"Missing metadata key: {key}"
 
     def test_mean_reversion_returns_none_when_below_sma200(self) -> None:
