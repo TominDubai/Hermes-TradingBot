@@ -122,3 +122,55 @@ class IntraScanner(BaseScanner):
         from hermes.setups.opening_range_breakout import OpeningRangeBreakout
         from hermes.setups.vwap_reversion import VWAPReversion
         return [OpeningRangeBreakout(), VWAPReversion(), MomentumContinuation()]
+
+# -- Multi-market scanner subclasses -----------------------------------------
+
+class LongEUScanner(LongScanner):
+    universe_name = "long_eu"
+
+class MidEUScanner(MidScanner):
+    universe_name = "mid_eu"
+
+class IntraEUScanner(IntraScanner):
+    universe_name = "intra_eu"
+
+class LongUKScanner(LongScanner):
+    universe_name = "long_uk"
+
+class MidUKScanner(MidScanner):
+    universe_name = "mid_uk"
+
+class IntraUKScanner(IntraScanner):
+    universe_name = "intra_uk"
+
+class LongHKScanner(LongScanner):
+    universe_name = "long_hk"
+
+class LongJPScanner(LongScanner):
+    universe_name = "long_jp"
+
+# -- Multi-market scanner subclasses -----------------------------------------
+
+class LongEUScanner(LongScanner):
+    universe_name = "long_eu"
+
+class MidEUScanner(MidScanner):
+    universe_name = "mid_eu"
+
+class IntraEUScanner(IntraScanner):
+    universe_name = "intra_eu"
+
+class LongUKScanner(LongScanner):
+    universe_name = "long_uk"
+
+class MidUKScanner(MidScanner):
+    universe_name = "mid_uk"
+
+class IntraUKScanner(IntraScanner):
+    universe_name = "intra_uk"
+
+class LongHKScanner(LongScanner):
+    universe_name = "long_hk"
+
+class LongJPScanner(LongScanner):
+    universe_name = "long_jp"

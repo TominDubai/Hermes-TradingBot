@@ -1,0 +1,71 @@
+name: mid_uk
+description: FTSE 100 top-50 by liquidity — mid-term scanning. Runs after UK close (~17:00 UTC).
+provider: yfinance
+timeframe: 1h
+scan_frequency: daily
+symbols:
+  # Energy
+  - SHEL.L     # Shell
+  - BP.L       # BP
+  # Mining & Materials
+  - RIO.L      # Rio Tinto
+  - GLEN.L     # Glencore
+  - BHP.L      # BHP Group
+  - AAL.L      # Anglo American
+  - ANTO.L     # Antofagasta
+  # Financials
+  - HSBA.L     # HSBC
+  - LLOY.L     # Lloyds Banking Group
+  - BARC.L     # Barclays
+  - NWG.L      # NatWest Group
+  - STAN.L     # Standard Chartered
+  - LSEG.L     # London Stock Exchange Group
+  - PRU.L      # Prudential
+  - AV.L       # Aviva
+  - LGEN.L     # Legal & General
+  - MNG.L      # M&G
+  - III.L      # 3i Group
+  # Healthcare & Pharma
+  - AZN.L      # AstraZeneca
+  - GSK.L      # GSK
+  - SN.L       # Smith & Nephew
+  - HIK.L      # Hikma Pharmaceuticals
+  # Consumer Staples
+  - ULVR.L     # Unilever
+  - DGE.L      # Diageo
+  - BATS.L     # British American Tobacco
+  - IMB.L      # Imperial Brands
+  - TSCO.L     # Tesco
+  - SBRY.L     # Sainsbury's
+  - RKT.L      # Reckitt Benckiser
+  - ABF.L      # Associated British Foods
+  # Consumer Discretionary
+  - RTO.L      # Rentokil Initial
+  - WTB.L      # Whitbread
+  - IHG.L      # InterContinental Hotels Group
+  - FLTR.L     # Flutter Entertainment
+  - AUTO.L     # Auto Trader Group
+  - MKS.L      # Marks & Spencer
+  # Industrials & Defence
+  - BA.L       # BAE Systems
+  - RR.L       # Rolls-Royce
+  - IMI.L      # IMI
+  - EXPN.L     # Experian
+  - BNZL.L     # Bunzl
+  - CPG.L      # Compass Group
+  - HLMA.L     # Halma
+  - SPX.L      # Spirax-Sarco Engineering
+  # Technology & Telecoms
+  - VOD.L      # Vodafone
+  - BT.A.L     # BT Group
+  - SGE.L      # Sage Group
+  - WPP.L      # WPP
+  # Utilities
+  - NG.L       # National Grid
+  - SSE.L      # SSE
+  - SVT.L      # Severn Trent
+  - UU.L       # United Utilities
+  # Real Estate
+  - SGRO.L     # SEGRO
+  - LAND.L     # Land Securities
+  - BLND.L     # British Land

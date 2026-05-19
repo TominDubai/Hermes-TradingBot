@@ -54,6 +54,47 @@ async def _run_intra_scan() -> None:
     from hermes.scanners.base import IntraScanner
     await IntraScanner().run_once()
 
+
+# ── Multi-market scanner jobs ─────────────────────────────────────────────
+
+async def _run_long_eu_scan() -> None:
+    from hermes.scanners.base import LongEUScanner
+    await LongEUScanner().run_once()
+
+async def _run_long_uk_scan() -> None:
+    from hermes.scanners.base import LongUKScanner
+    await LongUKScanner().run_once()
+
+async def _run_long_hk_scan() -> None:
+    from hermes.scanners.base import LongHKScanner
+    await LongHKScanner().run_once()
+
+async def _run_long_jp_scan() -> None:
+    from hermes.scanners.base import LongJPScanner
+    await LongJPScanner().run_once()
+
+async def _run_mid_eu_scan() -> None:
+    from hermes.scanners.base import MidEUScanner
+    await MidEUScanner().run_once()
+
+async def _run_mid_uk_scan() -> None:
+    from hermes.scanners.base import MidUKScanner
+    await MidUKScanner().run_once()
+
+async def _run_intra_eu_scan() -> None:
+    if settings.hermes_halted:
+        logger.info("Halted - skipping intra EU scan")
+        return
+    from hermes.scanners.base import IntraEUScanner
+    await IntraEUScanner().run_once()
+
+async def _run_intra_uk_scan() -> None:
+    if settings.hermes_halted:
+        logger.info("Halted - skipping intra UK scan")
+        return
+    from hermes.scanners.base import IntraUKScanner
+    await IntraUKScanner().run_once()
+
 async def _run_kill_switch_check() -> None:
     from hermes.risk.kill_switch import KillSwitch
     broker = _get_broker()
@@ -131,10 +172,24 @@ async def lifespan(app: FastAPI):
     # Scheduler
     scheduler = AsyncIOScheduler(timezone="UTC")
 
-    # Scanners
-    scheduler.add_job(_run_long_scan, CronTrigger(day_of_week="sun", hour=18, minute=0))
-    scheduler.add_job(_run_mid_scan, CronTrigger(day_of_week="mon-fri", hour=21, minute=15))
-    scheduler.add_job(_run_intra_scan, IntervalTrigger(minutes=15), id="intra_scan")
+    # ── US Scanners ─────────────────────────────────────────────────────────
+    scheduler.add_job(_run_long_scan, CronTrigger(day_of_week="sun", hour=18, minute=0), id="long_us")
+    scheduler.add_job(_run_mid_scan, CronTrigger(day_of_week="mon-fri", hour=21, minute=15), id="mid_us")
+    scheduler.add_job(_run_intra_scan, CronTrigger(day_of_week="mon-fri", hour="13-19", minute="*/15"), id="intra_us")
+
+    # ── EU Scanners (EuroStoxx 50) ───────────────────────────────────────────
+    scheduler.add_job(_run_long_eu_scan, CronTrigger(day_of_week="sun", hour=18, minute=5), id="long_eu")
+    scheduler.add_job(_run_mid_eu_scan, CronTrigger(day_of_week="mon-fri", hour=17, minute=0), id="mid_eu")
+    scheduler.add_job(_run_intra_eu_scan, CronTrigger(day_of_week="mon-fri", hour="7-16", minute="*/15"), id="intra_eu")
+
+    # ── UK Scanners (FTSE 100) ───────────────────────────────────────────────
+    scheduler.add_job(_run_long_uk_scan, CronTrigger(day_of_week="sun", hour=18, minute=10), id="long_uk")
+    scheduler.add_job(_run_mid_uk_scan, CronTrigger(day_of_week="mon-fri", hour=17, minute=5), id="mid_uk")
+    scheduler.add_job(_run_intra_uk_scan, CronTrigger(day_of_week="mon-fri", hour="8-16", minute="*/15"), id="intra_uk")
+
+    # ── Asian Scanners (long only) ───────────────────────────────────────────
+    scheduler.add_job(_run_long_hk_scan, CronTrigger(day_of_week="sun", hour=18, minute=15), id="long_hk")
+    scheduler.add_job(_run_long_jp_scan, CronTrigger(day_of_week="sun", hour=18, minute=20), id="long_jp")
     # Outcome tracker: every hour
     scheduler.add_job(run_outcome_check, IntervalTrigger(hours=1), id="outcome_tracker")
     # Kill switch check: every 5 min

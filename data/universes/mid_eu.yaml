@@ -1,0 +1,60 @@
+name: mid_eu
+description: EuroStoxx 50 blue-chip equities — mid-term scanning. Runs after EU close (~17:00 UTC).
+provider: yfinance
+timeframe: 1h
+scan_frequency: daily
+symbols:
+  # Germany (.DE)
+  - ADS.DE     # Adidas
+  - AIR.DE     # Airbus
+  - ALV.DE     # Allianz
+  - BASFN.DE   # BASF
+  - BMW.DE     # BMW
+  - BNR.DE     # Brenntag
+  - CBK.DE     # Commerzbank
+  - CON.DE     # Continental
+  - MBG.DE     # Mercedes-Benz Group
+  - DB1.DE     # Deutsche Börse
+  - DBK.DE     # Deutsche Bank
+  - DHL.DE     # DHL Group
+  - DTE.DE     # Deutsche Telekom
+  - EOAN.DE    # E.ON
+  - FME.DE     # Fresenius Medical Care
+  - FRE.DE     # Fresenius
+  - HEN3.DE    # Henkel
+  - IFX.DE     # Infineon Technologies
+  - MUV2.DE    # Munich Re
+  - RWE.DE     # RWE
+  - SAP.DE     # SAP
+  - SHL.DE     # Siemens Healthineers
+  - SIE.DE     # Siemens
+  - SY1.DE     # Symrise
+  - VOW3.DE    # Volkswagen Preferred
+  # France (.PA)
+  - AC.PA      # Accor
+  - AIR.PA     # Airbus
+  - BN.PA      # Danone
+  - BNP.PA     # BNP Paribas
+  - CA.PA      # Carrefour
+  - CS.PA      # AXA
+  - DSY.PA     # Dassault Systemes
+  - EL.PA      # EssilorLuxottica
+  - ENGI.PA    # Engie
+  - KER.PA     # Kering
+  - LR.PA      # Legrand
+  - MC.PA      # LVMH
+  - ML.PA      # Michelin
+  - OR.PA      # L'Oreal
+  - ORA.PA     # Orange
+  - RI.PA      # Pernod Ricard
+  - SAN.PA     # Sanofi
+  - SGO.PA     # Saint-Gobain
+  - STMPA.PA   # STMicroelectronics
+  - TTE.PA     # TotalEnergies
+  # Netherlands (.AS)
+  - ASML.AS    # ASML Holding
+  - HEIA.AS    # Heineken
+  - NN.AS      # NN Group
+  - PHIA.AS    # Philips
+  - RAND.AS    # Randstad
+  - URW.AS     # Unibail-Rodamco-Westfield
