@@ -53,6 +53,33 @@ async def list_portfolios() -> dict[str, Any]:
     }
 
 
+@router.get("/broker/paper-tracker")
+async def paper_tracker_status() -> dict:
+    """Virtual positions for EU/UK/HK/JP markets (no real broker yet)."""
+    from hermes.execution.paper_tracker import paper_tracker
+    positions = await paper_tracker.get_positions()
+    account = await paper_tracker.get_account()
+    return {
+        "broker": "paper_tracker",
+        "note": "Virtual tracking for EU/UK/HK/JP — no real execution until IBKR connected",
+        "equity": account.equity,
+        "today_pnl": account.today_pnl,
+        "open_positions": len(positions),
+        "positions": [
+            {
+                "symbol": p.symbol,
+                "qty": p.qty,
+                "avg_entry": p.avg_entry_price,
+                "current_price": p.current_price,
+                "unrealised_pnl": p.unrealised_pnl,
+                "side": p.side,
+            }
+            for p in positions
+        ],
+        "summary": paper_tracker.summary(),
+    }
+
+
 @router.get("/portfolios/{portfolio_id}")
 async def get_portfolio(portfolio_id: str) -> dict[str, Any]:
     if portfolio_id not in _portfolio_stats:

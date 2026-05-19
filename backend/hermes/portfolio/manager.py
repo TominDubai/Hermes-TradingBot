@@ -19,6 +19,7 @@ from hermes.events.types import (
     SignalScored,
 )
 from hermes.execution.base import ExecutionBroker, OrderRequest
+from hermes.execution.paper_tracker import is_non_us, paper_tracker
 
 if TYPE_CHECKING:
     pass
@@ -94,8 +95,9 @@ class PortfolioManager:
             )
             return
 
-        # Gate 3: market must be open
-        if not await self._broker.is_market_open():
+        # Gate 3: market must be open (skip for non-US — paper tracker handles those)
+        broker = paper_tracker if is_non_us(symbol) else self._broker
+        if not await broker.is_market_open():
             logger.debug("Gate 3 FAIL [%s]: market is closed", symbol)
             return
 
@@ -142,7 +144,8 @@ class PortfolioManager:
             return
 
         # Gate 7: position sizing — 2% of equity
-        account = await self._broker.get_account()
+        active_broker = paper_tracker if is_non_us(symbol) else self._broker
+        account = await active_broker.get_account()
         equity = account.equity
         qty = math.floor((equity * 0.02) / entry)
         if qty < 1:
@@ -157,14 +160,16 @@ class PortfolioManager:
 
         # All gates passed — build and submit bracket order
         notional = qty * entry
+        broker_name = "paper_tracker" if is_non_us(symbol) else self._broker.name
         logger.info(
-            "All gates PASS [%s] portfolio=%s score=%d qty=%d notional=%.2f rr=%.2f",
+            "All gates PASS [%s] portfolio=%s score=%d qty=%d notional=%.2f rr=%.2f broker=%s",
             symbol,
             portfolio,
             event.confluence_score,
             qty,
             notional,
             rr,
+            broker_name,
         )
 
         # Publish PositionRequested
@@ -195,7 +200,7 @@ class PortfolioManager:
             client_order_id=str(event.signal_id),
         )
 
-        result = await self._broker.submit_order(order_req)
+        result = await active_broker.submit_order(order_req)
 
         if result.status in ("accepted", "filled"):
             filled_price = result.filled_avg_price if result.filled_avg_price else entry
