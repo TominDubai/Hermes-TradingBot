@@ -17,6 +17,8 @@ from hermes.api.signals import router as signals_router
 from hermes.config import settings
 from hermes.events.bus import bus
 from hermes.outcome.tracker import run_outcome_check
+from hermes.outcome.position_monitor import run_position_monitor
+from hermes.db.persistence import setup_db_subscribers, load_recent_signals
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +168,18 @@ async def lifespan(app: FastAPI):
     # Event bus
     bus_task = asyncio.create_task(bus.run(), name="event-bus")
 
-    # Wire event subscribers
+    # Wire event subscribers (scoring → portfolio manager + DB persistence)
     _setup_event_subscribers()
+    setup_db_subscribers()
+
+    # Load recent signals from DB into memory (survive restarts)
+    from hermes.api.signals import _signals
+    try:
+        db_signals = await load_recent_signals(limit=500)
+        _signals.extend(db_signals)
+        logger.info("Loaded %d signals from DB", len(db_signals))
+    except Exception:
+        logger.warning("Could not load signals from DB — starting fresh")
 
     # Scheduler
     scheduler = AsyncIOScheduler(timezone="UTC")
@@ -194,6 +206,8 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(run_outcome_check, IntervalTrigger(hours=1), id="outcome_tracker")
     # Kill switch check: every 5 min
     scheduler.add_job(_run_kill_switch_check, IntervalTrigger(minutes=5), id="kill_switch")
+    # Position monitor: every 5 min during market hours
+    scheduler.add_job(run_position_monitor, IntervalTrigger(minutes=5), id="position_monitor")
     # Daily summary: weekdays 21:05 UTC (just after US close)
     scheduler.add_job(_run_daily_summary, CronTrigger(day_of_week="mon-fri", hour=21, minute=5))
 
