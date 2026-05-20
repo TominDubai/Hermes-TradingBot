@@ -8,7 +8,7 @@ import uvicorn
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from hermes.api.performance import router as performance_router
@@ -242,7 +242,8 @@ async def lifespan(app: FastAPI):
 
     if settings.hermes_env != "test":
         scheduler.start()
-        logger.info("Scheduler started with %d jobs", len(scheduler.get_jobs()))
+    app.state.scheduler = scheduler  # expose to API endpoints
+    logger.info("Scheduler started with %d jobs", len(scheduler.get_jobs()))
 
     logger.info(
         "Alpaca: %s | Telegram: %s | Halted: %s",
@@ -308,44 +309,43 @@ async def status() -> dict:
 
 
 @app.post("/api/scan/{portfolio}", tags=["scanner"])
-async def trigger_scan(portfolio: str) -> dict:
-    """Manually trigger a scan. Runs in background thread to avoid blocking."""
-    import threading
-
-    def run_in_thread(coro):
-        import asyncio
-        loop = asyncio.new_event_loop()
-        try:
-            loop.run_until_complete(coro)
-        finally:
-            loop.close()
+async def trigger_scan(portfolio: str, request: Request) -> dict:
+    """Manually trigger a scan by running the APScheduler job immediately."""
+    # Get the scheduler from app state
+    scheduler = request.app.state.scheduler if hasattr(request.app.state, "scheduler") else None
 
     scanners = {
-        "long":     _run_long_scan,
-        "mid":      _run_mid_scan,
-        "intra":    _run_intra_scan,
-        "long_eu":  _run_long_eu_scan,
-        "mid_eu":   _run_mid_eu_scan,
-        "intra_eu": _run_intra_eu_scan,
-        "long_uk":  _run_long_uk_scan,
-        "mid_uk":   _run_mid_uk_scan,
-        "intra_uk": _run_intra_uk_scan,
-        "long_hk":  _run_long_hk_scan,
-        "long_jp":  _run_long_jp_scan,
+        "long":     "long_us",
+        "mid":      "mid_us",
+        "intra":    "intra_us",
+        "long_eu":  "long_eu",
+        "mid_eu":   "mid_eu",
+        "intra_eu": "intra_eu",
+        "long_uk":  "long_uk",
+        "mid_uk":   "mid_uk",
+        "intra_uk": "intra_uk",
+        "long_hk":  "long_hk",
+        "long_jp":  "long_jp",
     }
+
     if portfolio == "all":
-        for name, fn in scanners.items():
-            if "intra" in name or "mid" in name:
-                t = threading.Thread(target=run_in_thread, args=(fn(),), daemon=True)
-                t.start()
+        if scheduler:
+            for job_id in ["mid_us", "intra_us", "mid_eu", "intra_eu", "mid_uk", "intra_uk"]:
+                job = scheduler.get_job(job_id)
+                if job:
+                    job.modify(next_run_time=__import__("datetime").datetime.now(__import__("datetime").timezone.utc))
         return {"status": "all_scans_triggered"}
 
     if portfolio not in scanners:
-        return {"error": f"Unknown portfolio: {portfolio}. Valid: {list(scanners.keys())} or 'all'"}
+        return {"error": f"Unknown portfolio: {portfolio}"}
 
-    t = threading.Thread(target=run_in_thread, args=(scanners[portfolio](),), daemon=True)
-    t.start()
-    return {"status": "scan_triggered", "portfolio": portfolio}
+    if scheduler:
+        job = scheduler.get_job(scanners[portfolio])
+        if job:
+            job.modify(next_run_time=__import__("datetime").datetime.now(__import__("datetime").timezone.utc))
+            return {"status": "scan_triggered", "portfolio": portfolio, "job_id": scanners[portfolio]}
+
+    return {"status": "scheduler_not_ready"}
 
 
 @app.get("/api/debug/scan", tags=["debug"])
