@@ -260,7 +260,7 @@ class PaperTracker:
             logger.exception("PaperTracker: failed to update closed position %s", trade.symbol)
 
     async def load_from_db(self) -> None:
-        """Load open positions from DB on startup."""
+        """Load open positions from DB on startup — skip any already in memory."""
         try:
             from sqlalchemy import select
             from hermes.db.session import AsyncSessionFactory
@@ -269,7 +269,10 @@ class PaperTracker:
                 stmt = select(PaperPosition).where(PaperPosition.closed == False)  # noqa: E712
                 result = await session.execute(stmt)
                 rows = result.scalars().all()
+                loaded = 0
                 for row in rows:
+                    if row.trade_id in self._trades:
+                        continue  # already in memory, skip
                     trade = VirtualTrade(
                         trade_id=row.trade_id,
                         symbol=row.symbol,
@@ -283,8 +286,9 @@ class PaperTracker:
                         current_price=row.entry_price,
                     )
                     self._trades[row.trade_id] = trade
-                if rows:
-                    logger.info("PaperTracker: loaded %d open positions from DB", len(rows))
+                    loaded += 1
+                if loaded:
+                    logger.info("PaperTracker: loaded %d open positions from DB", loaded)
         except Exception:
             logger.exception("PaperTracker: failed to load positions from DB")
 
