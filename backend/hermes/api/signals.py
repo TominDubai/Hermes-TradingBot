@@ -27,7 +27,7 @@ class ConnectionManager:
         self.active: list[WebSocket] = []
 
     async def connect(self, ws: WebSocket) -> None:
-        await ws.accept()
+        await ws.accept(headers=[(b"access-control-allow-origin", b"*")])
         self.active.append(ws)
         logger.info("WS client connected (%d total)", len(self.active))
 
@@ -125,6 +125,7 @@ async def get_signal(signal_id: str) -> dict[str, Any]:
 
 @router.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket) -> None:
+    # Accept from any origin (dashboard is served from same host)
     await manager.connect(ws)
     # Send current signal backlog on connect
     try:

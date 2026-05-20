@@ -81,7 +81,7 @@ class PortfolioManager:
 
         # Gate 1: system halted
         if self._config.hermes_halted:
-            logger.debug("Gate 1 FAIL [%s]: hermes_halted is True", symbol)
+            logger.info("Gate 1 FAIL [%s]: hermes_halted is True", symbol)
             return
 
         # Gate 2: minimum confluence score
@@ -99,7 +99,7 @@ class PortfolioManager:
         # IBKR handles all markets — always open for non-US, check clock for US
         broker = get_non_us_broker() if is_non_us(symbol) else self._broker
         if not await broker.is_market_open():
-            logger.debug("Gate 3 FAIL [%s]: market is closed", symbol)
+            logger.info("Gate 3 FAIL [%s]: market is closed", symbol)
             return
 
         # Gate 4: max open positions per portfolio
@@ -119,7 +119,7 @@ class PortfolioManager:
 
         # Gate 5: no duplicate symbol
         if symbol in self._positions:
-            logger.debug("Gate 5 FAIL [%s]: symbol already in open positions", symbol)
+            logger.info("Gate 5 FAIL [%s]: symbol already in open positions", symbol)
             return
 
         # Gate 6: risk-reward ratio
@@ -129,7 +129,7 @@ class PortfolioManager:
 
         risk = abs(entry - stop)
         if risk == 0:
-            logger.debug("Gate 6 FAIL [%s]: zero risk (entry == stop)", symbol)
+            logger.info("Gate 6 FAIL [%s]: zero risk (entry == stop)", symbol)
             return
 
         reward = abs(target - entry)
