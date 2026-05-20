@@ -151,21 +151,20 @@ async def _monitor_paper_tracker() -> None:
 
 
 async def _fetch_prices(symbols: list[str]) -> dict[str, float]:
-    """Fetch latest prices for a list of symbols."""
+    """Fetch latest prices for a list of symbols using intraday data."""
     import asyncio
-    from hermes.data.yfinance_provider import YFinanceProvider
-    from hermes.data.base import Timeframe
+    import yfinance as yf
 
-    provider = YFinanceProvider()
     prices: dict[str, float] = {}
-    end = date.today()
-    start = end - timedelta(days=5)
 
     async def fetch_one(sym: str) -> None:
         try:
-            df = await provider.get_ohlcv(sym, Timeframe.D1, start, end)
-            if not df.empty:
-                prices[sym] = float(df["close"].iloc[-1])
+            # Use yfinance fast_info for real-time last price
+            ticker = await asyncio.to_thread(lambda: yf.Ticker(sym))
+            info = await asyncio.to_thread(lambda: ticker.fast_info)
+            price = getattr(info, "last_price", None) or getattr(info, "previous_close", None)
+            if price and price > 0:
+                prices[sym] = float(price)
         except Exception:
             pass
 
