@@ -66,16 +66,18 @@ class IBKRBroker:
         from ib_async import IB
         if self._ib is None or not self._ib.isConnected():
             self._ib = IB()
+            # Use clientId+1 to avoid collision with any persistent connection
+            client_id = settings.ibkr_client_id + 1
             try:
                 await self._ib.connectAsync(
                     host=settings.ibkr_host,
                     port=settings.ibkr_port,
-                    clientId=settings.ibkr_client_id,
+                    clientId=client_id,
                     timeout=15,
                 )
                 self._connected = True
-                logger.info("IBKRBroker: connected to IB Gateway at %s:%d",
-                            settings.ibkr_host, settings.ibkr_port)
+                logger.info("IBKRBroker: connected to IB Gateway at %s:%d (clientId=%d)",
+                            settings.ibkr_host, settings.ibkr_port, client_id)
             except Exception as e:
                 self._connected = False
                 raise ProviderError("ibkr", "connection", str(e)) from e
