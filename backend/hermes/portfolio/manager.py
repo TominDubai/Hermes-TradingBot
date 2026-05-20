@@ -19,7 +19,7 @@ from hermes.events.types import (
     SignalScored,
 )
 from hermes.execution.base import ExecutionBroker, OrderRequest
-from hermes.execution.paper_tracker import is_non_us, paper_tracker
+from hermes.execution.paper_tracker import is_non_us, paper_tracker, get_non_us_broker
 
 if TYPE_CHECKING:
     pass
@@ -95,8 +95,8 @@ class PortfolioManager:
             )
             return
 
-        # Gate 3: market must be open (skip for non-US — paper tracker handles those)
-        broker = paper_tracker if is_non_us(symbol) else self._broker
+        # Gate 3: market must be open (skip for non-US — IBKR/PaperTracker handles those)
+        broker = get_non_us_broker() if is_non_us(symbol) else self._broker
         if not await broker.is_market_open():
             logger.debug("Gate 3 FAIL [%s]: market is closed", symbol)
             return
@@ -144,7 +144,7 @@ class PortfolioManager:
             return
 
         # Gate 7: position sizing — 2% of equity
-        active_broker = paper_tracker if is_non_us(symbol) else self._broker
+        active_broker = get_non_us_broker() if is_non_us(symbol) else self._broker
         account = await active_broker.get_account()
         equity = account.equity
         qty = math.floor((equity * 0.02) / entry)

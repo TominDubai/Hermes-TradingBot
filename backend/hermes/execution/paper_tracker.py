@@ -33,6 +33,18 @@ def is_non_us(symbol: str) -> bool:
     return any(symbol.upper().endswith(s) for s in NON_US_SUFFIXES)
 
 
+def get_non_us_broker():
+    """Return IBKRBroker if configured, else PaperTracker."""
+    from hermes.config import settings
+    if settings.ibkr_configured:
+        try:
+            from hermes.execution.ibkr_broker import IBKRBroker
+            return IBKRBroker()
+        except Exception:
+            pass
+    return paper_tracker
+
+
 @dataclass
 class VirtualTrade:
     trade_id: str

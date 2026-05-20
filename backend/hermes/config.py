@@ -29,8 +29,13 @@ class Settings(BaseSettings):
 
     # IBKR
     ibkr_host: str = "127.0.0.1"
-    ibkr_port: int = 4002
+    ibkr_port: int = 4001
     ibkr_client_id: int = 1
+    ibkr_account: str = ""
+
+    @property
+    def ibkr_configured(self) -> bool:
+        return bool(self.ibkr_host and self.ibkr_port)
 
     # Telegram
     hermes_telegram_bot_token: str = ""
