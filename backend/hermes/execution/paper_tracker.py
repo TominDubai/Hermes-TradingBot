@@ -138,6 +138,9 @@ class PaperTracker:
         )
         self._trades[trade_id] = trade
 
+        # Persist to DB
+        await self._save_position(trade)
+
         logger.info(
             "PaperTracker: VIRTUAL %s %s x%.0f @ %.4f [%s] — no real broker",
             req.side.upper(), req.symbol, req.qty, price, trade.market,
@@ -166,6 +169,8 @@ class PaperTracker:
                 trade.pnl = (trade.exit_price - trade.entry_price) * trade.qty
                 self._closed.append(trade)
                 del self._trades[trade_id]
+                # Persist close to DB
+                await self._update_position_closed(trade)
                 return OrderResult(
                     broker_order_id=trade_id,
                     symbol=symbol,
@@ -198,6 +203,78 @@ class PaperTracker:
             "markets": list({t.market for t in self._trades.values()}),
             "total_realised_pnl": round(sum(t.pnl for t in self._closed), 2),
         }
+
+    # ── DB persistence ────────────────────────────────────────
+
+    async def _save_position(self, trade: VirtualTrade) -> None:
+        try:
+            from hermes.db.session import AsyncSessionFactory
+            from hermes.db.models import PaperPosition
+            async with AsyncSessionFactory() as session:
+                row = PaperPosition(
+                    trade_id=trade.trade_id,
+                    symbol=trade.symbol,
+                    qty=trade.qty,
+                    entry_price=trade.entry_price,
+                    stop_price=trade.stop_price,
+                    target_price=trade.target_price,
+                    side=trade.side,
+                    market=trade.market,
+                    opened_at=trade.opened_at,
+                    closed=False,
+                    pnl=0.0,
+                )
+                session.add(row)
+                await session.commit()
+        except Exception:
+            logger.exception("PaperTracker: failed to save position %s", trade.symbol)
+
+    async def _update_position_closed(self, trade: VirtualTrade) -> None:
+        try:
+            from sqlalchemy import select
+            from hermes.db.session import AsyncSessionFactory
+            from hermes.db.models import PaperPosition
+            async with AsyncSessionFactory() as session:
+                stmt = select(PaperPosition).where(PaperPosition.trade_id == trade.trade_id)
+                result = await session.execute(stmt)
+                row = result.scalar_one_or_none()
+                if row:
+                    row.closed = True
+                    row.exit_price = trade.exit_price
+                    row.closed_at = trade.closed_at
+                    row.pnl = trade.pnl
+                    await session.commit()
+        except Exception:
+            logger.exception("PaperTracker: failed to update closed position %s", trade.symbol)
+
+    async def load_from_db(self) -> None:
+        """Load open positions from DB on startup."""
+        try:
+            from sqlalchemy import select
+            from hermes.db.session import AsyncSessionFactory
+            from hermes.db.models import PaperPosition
+            async with AsyncSessionFactory() as session:
+                stmt = select(PaperPosition).where(PaperPosition.closed == False)  # noqa: E712
+                result = await session.execute(stmt)
+                rows = result.scalars().all()
+                for row in rows:
+                    trade = VirtualTrade(
+                        trade_id=row.trade_id,
+                        symbol=row.symbol,
+                        qty=row.qty,
+                        entry_price=row.entry_price,
+                        stop_price=row.stop_price,
+                        target_price=row.target_price,
+                        side=row.side,
+                        opened_at=row.opened_at,
+                        market=row.market,
+                        current_price=row.entry_price,
+                    )
+                    self._trades[row.trade_id] = trade
+                if rows:
+                    logger.info("PaperTracker: loaded %d open positions from DB", len(rows))
+        except Exception:
+            logger.exception("PaperTracker: failed to load positions from DB")
 
 
 # Singleton

@@ -86,3 +86,27 @@ class AppEvent(Base):
     __table_args__ = (
         Index("ix_app_events_type_occurred", "event_type", "occurred_at"),
     )
+
+
+class PaperPosition(Base):
+    """Persisted PaperTracker virtual position for EU/UK/HK/JP markets."""
+    __tablename__ = "paper_positions"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    trade_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
+    symbol: Mapped[str] = mapped_column(String(32), nullable=False)
+    qty: Mapped[float] = mapped_column(Float, nullable=False)
+    entry_price: Mapped[float] = mapped_column(Float, nullable=False)
+    stop_price: Mapped[float] = mapped_column(Float, nullable=False)
+    target_price: Mapped[float] = mapped_column(Float, nullable=False)
+    side: Mapped[str] = mapped_column(String(8), nullable=False)
+    market: Mapped[str] = mapped_column(String(8), nullable=False)
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    closed: Mapped[bool] = mapped_column(default=False, nullable=False)
+    exit_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pnl: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+
+    __table_args__ = (
+        Index("ix_paper_positions_symbol", "symbol"),
+    )

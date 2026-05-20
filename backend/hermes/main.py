@@ -181,6 +181,13 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.warning("Could not load signals from DB — starting fresh")
 
+    # Load open PaperTracker positions from DB
+    from hermes.execution.paper_tracker import paper_tracker
+    try:
+        await paper_tracker.load_from_db()
+    except Exception:
+        logger.warning("Could not load paper positions from DB")
+
     # Scheduler
     scheduler = AsyncIOScheduler(timezone="UTC")
 
