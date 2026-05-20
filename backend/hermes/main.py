@@ -208,17 +208,17 @@ async def lifespan(app: FastAPI):
     # ── US Scanners ─────────────────────────────────────────────────────────
     scheduler.add_job(_run_long_scan, CronTrigger(day_of_week="sun", hour=18, minute=0), id="long_us")
     scheduler.add_job(_run_mid_scan, CronTrigger(day_of_week="mon-fri", hour=21, minute=15), id="mid_us")
-    scheduler.add_job(_run_intra_scan, CronTrigger(day_of_week="mon-fri", hour="13-19", minute="*/15"), id="intra_us")
+    scheduler.add_job(_run_intra_scan, CronTrigger(day_of_week="mon-fri", hour="13-19", minute="0,15,30,45"), id="intra_us")
 
-    # ── EU Scanners (EuroStoxx 50) ───────────────────────────────────────────
+    # ── EU Scanners (EuroStoxx 50) — staggered 5 min after US ───────────────
     scheduler.add_job(_run_long_eu_scan, CronTrigger(day_of_week="sun", hour=18, minute=5), id="long_eu")
     scheduler.add_job(_run_mid_eu_scan, CronTrigger(day_of_week="mon-fri", hour=17, minute=0), id="mid_eu")
-    scheduler.add_job(_run_intra_eu_scan, CronTrigger(day_of_week="mon-fri", hour="7-16", minute="*/15"), id="intra_eu")
+    scheduler.add_job(_run_intra_eu_scan, CronTrigger(day_of_week="mon-fri", hour="7-16", minute="3,18,33,48"), id="intra_eu")
 
-    # ── UK Scanners (FTSE 100) ───────────────────────────────────────────────
+    # ── UK Scanners (FTSE 100) — staggered 10 min after US ──────────────────
     scheduler.add_job(_run_long_uk_scan, CronTrigger(day_of_week="sun", hour=18, minute=10), id="long_uk")
     scheduler.add_job(_run_mid_uk_scan, CronTrigger(day_of_week="mon-fri", hour=17, minute=5), id="mid_uk")
-    scheduler.add_job(_run_intra_uk_scan, CronTrigger(day_of_week="mon-fri", hour="8-16", minute="*/15"), id="intra_uk")
+    scheduler.add_job(_run_intra_uk_scan, CronTrigger(day_of_week="mon-fri", hour="8-16", minute="6,21,36,51"), id="intra_uk")
 
     # ── Asian Scanners (long only) ───────────────────────────────────────────
     scheduler.add_job(_run_long_hk_scan, CronTrigger(day_of_week="sun", hour=18, minute=15), id="long_hk")
