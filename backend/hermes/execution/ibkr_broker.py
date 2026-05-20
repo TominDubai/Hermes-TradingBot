@@ -86,9 +86,14 @@ class IBKRBroker:
         return self._ib
 
     async def get_account(self) -> AccountInfo:
+        import asyncio
         ib = await self._get_ib()
         account = settings.ibkr_account or (ib.managedAccounts()[0] if ib.managedAccounts() else "")
-        summary = await ib.reqAccountSummaryAsync()
+        try:
+            summary = await asyncio.wait_for(ib.reqAccountSummaryAsync(), timeout=10)
+        except asyncio.TimeoutError:
+            logger.warning("IBKRBroker: reqAccountSummaryAsync timed out")
+            return AccountInfo(equity=0, cash=0, buying_power=0, portfolio_value=0, today_pnl=0, today_pnl_pct=0)
 
         def get_val(tag: str) -> float:
             for item in summary:
@@ -113,8 +118,13 @@ class IBKRBroker:
         )
 
     async def get_positions(self) -> list[Position]:
+        import asyncio
         ib = await self._get_ib()
-        ib_positions = await ib.reqPositionsAsync()
+        try:
+            ib_positions = await asyncio.wait_for(ib.reqPositionsAsync(), timeout=10)
+        except asyncio.TimeoutError:
+            logger.warning("IBKRBroker: reqPositionsAsync timed out")
+            return []
         positions = []
         for pos in ib_positions:
             if pos.position == 0:
