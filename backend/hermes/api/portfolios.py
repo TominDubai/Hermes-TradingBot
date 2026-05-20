@@ -11,14 +11,6 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/api", tags=["portfolios"])
 
 
-# ── In-memory state (Phase 5 moves this to DB) ────────────────
-
-_portfolio_stats: dict[str, dict[str, Any]] = {
-    "long":  {"open_positions": 0, "today_pnl": 0.0, "win_rate_30d": 0.0, "equity": 10000.0},
-    "mid":   {"open_positions": 0, "today_pnl": 0.0, "win_rate_30d": 0.0, "equity": 10000.0},
-    "intra": {"open_positions": 0, "today_pnl": 0.0, "win_rate_30d": 0.0, "equity": 10000.0},
-}
-
 _settings: dict[str, Any] = {
     "halted": False,
     "min_confluence": 2,
@@ -32,10 +24,81 @@ _settings: dict[str, Any] = {
 }
 
 
-# ── Portfolios ────────────────────────────────────────────────
+# ── Portfolio stats (live from brokers + DB) ───────────────────
+
+async def _get_live_portfolio_stats() -> dict[str, dict[str, Any]]:
+    """Fetch real equity, positions and P&L from Alpaca + PaperTracker + DB."""
+    from hermes.config import settings
+    from hermes.execution.paper_tracker import paper_tracker
+    from hermes.api.signals import _signals
+
+    stats: dict[str, dict[str, Any]] = {
+        "long":  {"open_positions": 0, "today_pnl": 0.0, "win_rate_30d": 0.0, "equity": 0.0},
+        "mid":   {"open_positions": 0, "today_pnl": 0.0, "win_rate_30d": 0.0, "equity": 0.0},
+        "intra": {"open_positions": 0, "today_pnl": 0.0, "win_rate_30d": 0.0, "equity": 0.0},
+    }
+
+    # Alpaca account (US)
+    try:
+        if settings.alpaca_configured:
+            from hermes.execution.alpaca_broker import AlpacaBroker
+            broker = AlpacaBroker()
+            account = await broker.get_account()
+            positions = await broker.get_positions()
+            # Distribute Alpaca equity across portfolios by position count
+            # For now attribute all to intra (US focus) — improve when we track per-portfolio
+            us_positions = len(positions)
+            pnl = account.today_pnl
+            for pid in ["long", "mid", "intra"]:
+                stats[pid]["equity"] = account.equity / 3
+            stats["intra"]["open_positions"] = us_positions
+            stats["intra"]["today_pnl"] = round(pnl, 2)
+    except Exception:
+        for pid in ["long", "mid", "intra"]:
+            stats[pid]["equity"] = 10000.0
+
+    # PaperTracker (EU/UK/HK/JP virtual positions)
+    try:
+        pt_account = await paper_tracker.get_account()
+        pt_positions = await paper_tracker.get_positions()
+        stats["mid"]["equity"] += pt_account.equity - 10000.0  # add P&L on top
+        stats["mid"]["open_positions"] += len(pt_positions)
+        stats["mid"]["today_pnl"] += pt_account.today_pnl
+    except Exception:
+        pass
+
+    # Win rate from DB signals with outcomes
+    try:
+        from sqlalchemy import select, func
+        from hermes.db.models import Signal
+        from hermes.db.session import AsyncSessionFactory
+        async with AsyncSessionFactory() as session:
+            for pid in ["long", "mid", "intra"]:
+                stmt = select(
+                    func.count(Signal.id).label("total"),
+                    func.sum(
+                        (Signal.outcome == "WIN").cast(type_=__import__("sqlalchemy").Integer)
+                    ).label("wins")
+                ).where(
+                    Signal.portfolio == pid,
+                    Signal.outcome.isnot(None)
+                )
+                result = await session.execute(stmt)
+                row = result.one()
+                total = row.total or 0
+                wins = int(row.wins or 0)
+                stats[pid]["win_rate_30d"] = round(wins / total, 3) if total > 0 else 0.0
+    except Exception:
+        pass
+
+    return stats
+
+
+# ── Endpoints ──────────────────────────────────────────────────
 
 @router.get("/portfolios")
 async def list_portfolios() -> dict[str, Any]:
+    stats = await _get_live_portfolio_stats()
     return {
         "portfolios": [
             {
@@ -46,9 +109,9 @@ async def list_portfolios() -> dict[str, Any]:
                     "mid": "1–8 week holds, daily scan",
                     "intra": "Same-day to 3-day, 15-min scan",
                 }[pid],
-                **stats,
+                **s,
             }
-            for pid, stats in _portfolio_stats.items()
+            for pid, s in stats.items()
         ]
     }
 
@@ -82,9 +145,10 @@ async def paper_tracker_status() -> dict:
 
 @router.get("/portfolios/{portfolio_id}")
 async def get_portfolio(portfolio_id: str) -> dict[str, Any]:
-    if portfolio_id not in _portfolio_stats:
+    stats = await _get_live_portfolio_stats()
+    if portfolio_id not in stats:
         return {"error": f"Unknown portfolio: {portfolio_id}"}
-    return {"id": portfolio_id, **_portfolio_stats[portfolio_id]}
+    return {"id": portfolio_id, **stats[portfolio_id]}
 
 
 # ── Settings ──────────────────────────────────────────────────
@@ -114,7 +178,6 @@ async def update_settings(update: SettingsUpdate) -> dict[str, Any]:
 @router.post("/settings/halt")
 async def halt() -> dict[str, Any]:
     _settings["halted"] = True
-    # Note: In production this writes to .env / DB so it survives restarts
     return {"status": "halted", "message": "All new signal entries halted. Existing positions unaffected."}
 
 

@@ -29,12 +29,26 @@
   onMount(() => {
     loadData();
 
+    // Auto-refresh every 30 seconds
+    const refreshInterval = setInterval(loadData, 30000);
+
     const unsub = ws.on('signal_detected', (data) => {
       const s = data as Signal;
       recentSignals = [s, ...recentSignals].slice(0, 5);
     });
 
-    return () => unsub();
+    // Also refresh on backlog (reconnect)
+    const unsubBacklog = ws.on('backlog', (data) => {
+      const signals = data as Signal[];
+      if (signals?.length) recentSignals = signals.slice(0, 5);
+      loadData(); // refresh portfolio stats too
+    });
+
+    return () => {
+      clearInterval(refreshInterval);
+      unsub();
+      unsubBacklog();
+    };
   });
 
   function fmt(n: number | null | undefined, digits = 2) {
