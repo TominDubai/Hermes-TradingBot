@@ -203,7 +203,14 @@ async def lifespan(app: FastAPI):
         logger.warning("Could not load paper positions from DB")
 
     # Scheduler
-    scheduler = AsyncIOScheduler(timezone="UTC")
+    scheduler = AsyncIOScheduler(
+        timezone="UTC",
+        job_defaults={
+            "coalesce": True,          # skip missed runs, don't stack up
+            "max_instances": 1,        # only one instance of each job at a time
+            "misfire_grace_time": 60,  # allow up to 60s late start before skipping
+        }
+    )
 
     # ── US Scanners ─────────────────────────────────────────────────────────
     scheduler.add_job(_run_long_scan, CronTrigger(day_of_week="sun", hour=18, minute=0), id="long_us")
