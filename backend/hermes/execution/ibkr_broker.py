@@ -225,3 +225,7 @@ class IBKRBroker:
         if self._ib and self._ib.isConnected():
             self._ib.disconnect()
             self._connected = False
+
+
+# Singleton — reuse one connection across the app
+ibkr_broker = IBKRBroker()

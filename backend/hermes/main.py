@@ -181,6 +181,7 @@ async def lifespan(app: FastAPI):
 
     # Event bus
     bus_task = asyncio.create_task(bus.run(), name="event-bus")
+    bus._main_loop = asyncio.get_event_loop()  # store ref for thread-safe publishing
 
     # Wire event subscribers (scoring → portfolio manager + DB persistence)
     _setup_event_subscribers()

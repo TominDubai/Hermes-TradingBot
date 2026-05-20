@@ -34,14 +34,14 @@ def is_non_us(symbol: str) -> bool:
 
 
 def get_non_us_broker():
-    """Return IBKRBroker if configured, else PaperTracker."""
+    """Return IBKRBroker singleton if configured, else PaperTracker."""
     from hermes.config import settings
     if settings.ibkr_configured:
         try:
-            from hermes.execution.ibkr_broker import IBKRBroker
-            return IBKRBroker()
+            from hermes.execution.ibkr_broker import ibkr_broker
+            return ibkr_broker
         except Exception:
-            pass
+            logger.warning("IBKRBroker unavailable, falling back to PaperTracker")
     return paper_tracker
 
 

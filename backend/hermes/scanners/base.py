@@ -66,6 +66,7 @@ class BaseScanner(ABC):
         return signals
 
     async def _publish(self, symbol: str, result: SetupResult) -> None:
+        import asyncio
         event = SignalDetected(
             symbol=symbol,
             portfolio=self.portfolio,
@@ -78,7 +79,12 @@ class BaseScanner(ABC):
             target_price=result.target,
             features=result.metadata,
         )
-        await bus.publish(event)
+        # If called from a background thread, post to the main event loop
+        main_loop = getattr(bus, "_main_loop", None)
+        if main_loop and main_loop.is_running():
+            asyncio.run_coroutine_threadsafe(bus.publish(event), main_loop)
+        else:
+            await bus.publish(event)
         logger.info("Signal: %s %s %s score=%.2f", symbol, result.setup_name,
                     result.direction.value, result.score)
 
