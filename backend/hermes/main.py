@@ -25,10 +25,24 @@ logger = logging.getLogger(__name__)
 # ── Lazy singletons ───────────────────────────────────────────
 
 def _get_broker():
-    """Return the configured broker (Alpaca paper or PaperBroker fallback)."""
+    """
+    Return the configured broker.
+    Preference: IBKRBroker (global, all markets) → AlpacaBroker (US fallback) → PaperBroker
+    """
+    # Try IBKR first — handles all markets including US
+    if settings.ibkr_configured:
+        try:
+            from hermes.execution.ibkr_broker import IBKRBroker
+            return IBKRBroker()
+        except Exception:
+            logger.warning("IBKRBroker unavailable, falling back to Alpaca")
+
+    # Alpaca fallback — US only
     if settings.alpaca_configured:
         from hermes.execution.alpaca_broker import AlpacaBroker
         return AlpacaBroker()
+
+    # Last resort — in-memory paper broker
     from hermes.execution.paper_broker import PaperBroker
     return PaperBroker()
 
@@ -263,6 +277,7 @@ app.include_router(portfolios_router)
 
 @app.get("/health", tags=["system"])
 async def health() -> dict:
+    broker = _get_broker()
     return {
         "status": "ok",
         "version": "0.1.0",
@@ -270,8 +285,9 @@ async def health() -> dict:
         "env": settings.hermes_env,
         "halted": settings.hermes_halted,
         "alpaca_configured": settings.alpaca_configured,
+        "ibkr_configured": settings.ibkr_configured,
         "telegram_configured": settings.telegram_configured,
-        "broker": "alpaca_paper" if settings.alpaca_configured else "paper_broker",
+        "broker": broker.name,
     }
 
 

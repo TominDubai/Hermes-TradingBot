@@ -95,7 +95,8 @@ class PortfolioManager:
             )
             return
 
-        # Gate 3: market must be open (skip for non-US — IBKR/PaperTracker handles those)
+        # Gate 3: market must be open
+        # IBKR handles all markets — always open for non-US, check clock for US
         broker = get_non_us_broker() if is_non_us(symbol) else self._broker
         if not await broker.is_market_open():
             logger.debug("Gate 3 FAIL [%s]: market is closed", symbol)
