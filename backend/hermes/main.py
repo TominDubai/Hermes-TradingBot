@@ -196,6 +196,15 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.warning("Could not load signals from DB — starting fresh")
 
+    # Pre-connect IBKR broker at startup (avoid lazy connection hanging API requests)
+    if settings.ibkr_configured:
+        try:
+            from hermes.execution.ibkr_broker import ibkr_broker
+            await ibkr_broker._get_ib()
+            logger.info("IBKR broker pre-connected at startup")
+        except Exception as e:
+            logger.warning("IBKR pre-connect failed (will retry on demand): %s", e)
+
     # Load open PaperTracker positions from DB
     from hermes.execution.paper_tracker import paper_tracker
     try:
