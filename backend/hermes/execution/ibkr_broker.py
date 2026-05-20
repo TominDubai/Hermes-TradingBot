@@ -66,8 +66,9 @@ class IBKRBroker:
         from ib_async import IB
         if self._ib is None or not self._ib.isConnected():
             self._ib = IB()
-            # Use clientId+1 to avoid collision with any persistent connection
-            client_id = settings.ibkr_client_id + 1
+            # Use a random clientId to avoid collisions with other connections
+            import random
+            client_id = random.randint(10, 99)
             try:
                 await self._ib.connectAsync(
                     host=settings.ibkr_host,
@@ -80,6 +81,7 @@ class IBKRBroker:
                             settings.ibkr_host, settings.ibkr_port, client_id)
             except Exception as e:
                 self._connected = False
+                self._ib = None
                 raise ProviderError("ibkr", "connection", str(e)) from e
         return self._ib
 

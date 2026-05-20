@@ -78,6 +78,7 @@ class PortfolioManager:
         """Main entry point — called by the EventBus for every SignalScored."""
         symbol = event.symbol
         portfolio = event.portfolio
+        logger.info("PM: received scored signal %s score=%s", symbol, event.confluence_score)
 
         # Gate 1: system halted
         if self._config.hermes_halted:
