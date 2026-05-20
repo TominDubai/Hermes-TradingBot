@@ -301,15 +301,27 @@ async def status() -> dict:
 
 @app.post("/api/scan/{portfolio}", tags=["scanner"])
 async def trigger_scan(portfolio: str) -> dict:
-    """Manually trigger a scan (dev/testing)."""
-    if portfolio == "long":
-        asyncio.create_task(_run_long_scan())
-    elif portfolio == "mid":
-        asyncio.create_task(_run_mid_scan())
-    elif portfolio == "intra":
-        asyncio.create_task(_run_intra_scan())
-    else:
+    """Manually trigger a scan (dev/testing). Runs in background thread to avoid blocking."""
+    import threading
+
+    def run_in_thread(coro):
+        import asyncio
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(coro)
+        finally:
+            loop.close()
+
+    scanners = {
+        "long": _run_long_scan,
+        "mid": _run_mid_scan,
+        "intra": _run_intra_scan,
+    }
+    if portfolio not in scanners:
         return {"error": f"Unknown portfolio: {portfolio}"}
+
+    t = threading.Thread(target=run_in_thread, args=(scanners[portfolio](),), daemon=True)
+    t.start()
     return {"status": "scan_triggered", "portfolio": portfolio}
 
 
