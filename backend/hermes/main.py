@@ -308,7 +308,7 @@ async def status() -> dict:
 
 @app.post("/api/scan/{portfolio}", tags=["scanner"])
 async def trigger_scan(portfolio: str) -> dict:
-    """Manually trigger a scan (dev/testing). Runs in background thread to avoid blocking."""
+    """Manually trigger a scan. Runs in background thread to avoid blocking."""
     import threading
 
     def run_in_thread(coro):
@@ -320,12 +320,27 @@ async def trigger_scan(portfolio: str) -> dict:
             loop.close()
 
     scanners = {
-        "long": _run_long_scan,
-        "mid": _run_mid_scan,
-        "intra": _run_intra_scan,
+        "long":     _run_long_scan,
+        "mid":      _run_mid_scan,
+        "intra":    _run_intra_scan,
+        "long_eu":  _run_long_eu_scan,
+        "mid_eu":   _run_mid_eu_scan,
+        "intra_eu": _run_intra_eu_scan,
+        "long_uk":  _run_long_uk_scan,
+        "mid_uk":   _run_mid_uk_scan,
+        "intra_uk": _run_intra_uk_scan,
+        "long_hk":  _run_long_hk_scan,
+        "long_jp":  _run_long_jp_scan,
     }
+    if portfolio == "all":
+        for name, fn in scanners.items():
+            if "intra" in name or "mid" in name:
+                t = threading.Thread(target=run_in_thread, args=(fn(),), daemon=True)
+                t.start()
+        return {"status": "all_scans_triggered"}
+
     if portfolio not in scanners:
-        return {"error": f"Unknown portfolio: {portfolio}"}
+        return {"error": f"Unknown portfolio: {portfolio}. Valid: {list(scanners.keys())} or 'all'"}
 
     t = threading.Thread(target=run_in_thread, args=(scanners[portfolio](),), daemon=True)
     t.start()
