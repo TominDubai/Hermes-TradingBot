@@ -46,6 +46,24 @@ export interface PortfoliosResponse {
   portfolios: Portfolio[];
 }
 
+export interface Position {
+  symbol: string;
+  qty: number;
+  avg_entry: number;
+  current_price: number;
+  unrealised_pnl: number;
+  unrealised_pnl_pct: number;
+  side: string;
+  broker: string;
+  market: string;
+}
+
+export interface PositionsResponse {
+  portfolio: string;
+  count: number;
+  positions: Position[];
+}
+
 export interface Settings {
   halted: boolean;
   min_confluence: number;
@@ -111,6 +129,7 @@ export const api = {
 
   portfolios: () => get<PortfoliosResponse>(`${BASE}/portfolios`),
   portfolio: (id: string) => get<Portfolio>(`${BASE}/portfolios/${id}`),
+  portfolioPositions: (id: string) => get<PositionsResponse>(`${BASE}/portfolios/${id}/positions`),
 
   settings: () => get<Settings>(`${BASE}/settings`),
   updateSettings: (s: Partial<Settings>) => patch<Settings>(`${BASE}/settings`, s),

@@ -1,24 +1,27 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
-  import { api, type Portfolio, type Signal } from '$lib/api';
+  import { api, type Portfolio, type Signal, type Position } from '$lib/api';
   import { ws } from '$lib/ws';
 
   let portfolioId = $derived($page.params.id as 'long' | 'mid' | 'intra');
 
   let portfolio = $state<Portfolio | null>(null);
   let signals = $state<Signal[]>([]);
+  let positions = $state<Position[]>([]);
   let loading = $state(true);
 
   async function loadData() {
     loading = true;
     try {
-      const [p, sRes] = await Promise.all([
+      const [p, sRes, posRes] = await Promise.all([
         api.portfolio(portfolioId),
         api.signals({ portfolio: portfolioId, limit: 100 }),
+        api.portfolioPositions(portfolioId),
       ]);
       portfolio = p;
       signals = sRes.signals;
+      positions = posRes.positions;
     } catch {
       portfolio = null;
     } finally {
@@ -28,13 +31,17 @@
 
   onMount(() => {
     loadData();
+    const refreshInterval = setInterval(loadData, 30000);
 
     const unsub = ws.on('signal_detected', (data) => {
       const s = data as Signal;
       if (s.portfolio === portfolioId) signals = [s, ...signals];
     });
 
-    return () => unsub();
+    return () => {
+      clearInterval(refreshInterval);
+      unsub();
+    };
   });
 
   $effect(() => {
@@ -120,6 +127,64 @@
         {/if}
       </div>
     {/each}
+  </div>
+
+  <!-- Open positions ---->
+  <div>
+    <h2 class="text-sm font-semibold uppercase tracking-wider mb-3" style="color: var(--color-muted);">
+      Open Positions {#if positions.length > 0}<span class="text-blue-400">({positions.length})</span>{/if}
+    </h2>
+    {#if loading}
+      <div class="rounded-xl p-8 border text-center animate-pulse" style="background: var(--color-surface); border-color: var(--color-border);">
+        <div class="h-4 w-48 rounded mx-auto" style="background: var(--color-border);"></div>
+      </div>
+    {:else if positions.length === 0}
+      <div class="rounded-xl p-8 border text-center" style="background: var(--color-surface); border-color: var(--color-border);">
+        <p style="color: var(--color-muted);">No open positions. Orders will execute when market is open.</p>
+      </div>
+    {:else}
+      <div class="rounded-xl border overflow-x-auto" style="background: var(--color-surface); border-color: var(--color-border);">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-xs uppercase tracking-wider" style="border-color: var(--color-border); color: var(--color-muted);">
+              <th class="text-left px-4 py-3 font-medium">Symbol</th>
+              <th class="text-left px-4 py-3 font-medium">Market</th>
+              <th class="text-right px-4 py-3 font-medium">Qty</th>
+              <th class="text-right px-4 py-3 font-medium">Entry</th>
+              <th class="text-right px-4 py-3 font-medium">Current</th>
+              <th class="text-right px-4 py-3 font-medium">P&L</th>
+              <th class="text-right px-4 py-3 font-medium">P&L %</th>
+              <th class="text-left px-4 py-3 font-medium">Broker</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each positions as pos}
+              {@const pnlPos = pos.unrealised_pnl >= 0}
+              <tr class="border-b hover:bg-white/[0.02] transition-colors"
+                style="border-color: var(--color-border);">
+                <td class="px-4 py-3 font-bold font-mono">{pos.symbol}</td>
+                <td class="px-4 py-3">
+                  <span class="text-xs px-2 py-0.5 rounded font-semibold"
+                    style="background: rgba(59,130,246,0.12); color: #3b82f6;">
+                    {pos.market}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right font-mono tabular-nums">{pos.qty}</td>
+                <td class="px-4 py-3 text-right font-mono tabular-nums">${fmt(pos.avg_entry)}</td>
+                <td class="px-4 py-3 text-right font-mono tabular-nums">${fmt(pos.current_price)}</td>
+                <td class="px-4 py-3 text-right font-mono tabular-nums {pnlPos ? 'text-green-400' : 'text-red-400'}">
+                  {pnlPos ? '+' : ''}{fmt(pos.unrealised_pnl)}
+                </td>
+                <td class="px-4 py-3 text-right font-mono tabular-nums {pnlPos ? 'text-green-400' : 'text-red-400'}">
+                  {pnlPos ? '+' : ''}{fmt(pos.unrealised_pnl_pct, 2)}%
+                </td>
+                <td class="px-4 py-3 text-xs" style="color: var(--color-muted);">{pos.broker}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
   </div>
 
   <!-- Equity curve placeholder -->

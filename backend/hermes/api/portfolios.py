@@ -143,6 +143,61 @@ async def paper_tracker_status() -> dict:
     }
 
 
+@router.get("/portfolios/{portfolio_id}/positions")
+async def get_portfolio_positions(portfolio_id: str) -> dict[str, Any]:
+    """Live open positions for a portfolio — Alpaca (US) + PaperTracker (EU/UK/HK/JP)."""
+    positions = []
+
+    # Alpaca positions (intra/long/mid — for now show all US positions on each)
+    from hermes.config import settings as cfg
+    if cfg.alpaca_configured:
+        try:
+            from hermes.execution.alpaca_broker import AlpacaBroker
+            broker = AlpacaBroker()
+            alpaca_positions = await broker.get_positions()
+            for p in alpaca_positions:
+                positions.append({
+                    "symbol": p.symbol,
+                    "qty": p.qty,
+                    "avg_entry": p.avg_entry_price,
+                    "current_price": p.current_price,
+                    "unrealised_pnl": round(p.unrealised_pnl, 2),
+                    "unrealised_pnl_pct": round((p.current_price - p.avg_entry_price) / p.avg_entry_price * 100, 2) if p.avg_entry_price else 0,
+                    "side": p.side,
+                    "broker": "alpaca",
+                    "market": "US",
+                })
+        except Exception:
+            pass
+
+    # PaperTracker positions (mid portfolio — EU/UK/HK/JP)
+    if portfolio_id == "mid":
+        from hermes.execution.paper_tracker import paper_tracker
+        try:
+            pt_positions = await paper_tracker.get_positions()
+            for p in pt_positions:
+                pnl_pct = round((p.current_price - p.avg_entry_price) / p.avg_entry_price * 100, 2) if p.avg_entry_price else 0
+                positions.append({
+                    "symbol": p.symbol,
+                    "qty": p.qty,
+                    "avg_entry": p.avg_entry_price,
+                    "current_price": p.current_price,
+                    "unrealised_pnl": round(p.unrealised_pnl, 2),
+                    "unrealised_pnl_pct": pnl_pct,
+                    "side": p.side,
+                    "broker": "paper_tracker",
+                    "market": "EU/UK/HK/JP",
+                })
+        except Exception:
+            pass
+
+    return {
+        "portfolio": portfolio_id,
+        "count": len(positions),
+        "positions": positions,
+    }
+
+
 @router.get("/portfolios/{portfolio_id}")
 async def get_portfolio(portfolio_id: str) -> dict[str, Any]:
     stats = await _get_live_portfolio_stats()
