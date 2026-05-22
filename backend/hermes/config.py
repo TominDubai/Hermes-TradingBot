@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file="../.env",
+        # `.env.local` overrides `.env` for local dev (gitignored). Both optional.
+        env_file=("../.env", "../.env.local"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -13,6 +14,9 @@ class Settings(BaseSettings):
     hermes_log_level: str = "INFO"
     hermes_port: int = 8090
     hermes_halted: bool = False
+    # When false, scheduled scanners + monitors are disabled. Used for local dev so
+    # the dev backend doesn't double-scan against the live universe.
+    hermes_scheduler_enabled: bool = True
 
     # Database
     database_url: str = "postgresql+asyncpg://hermes:hermes@localhost:5432/hermes"

@@ -249,10 +249,16 @@ async def lifespan(app: FastAPI):
     # Daily summary: weekdays 21:05 UTC (just after US close)
     scheduler.add_job(_run_daily_summary, CronTrigger(day_of_week="mon-fri", hour=21, minute=5))
 
-    if settings.hermes_env != "test":
+    if settings.hermes_env != "test" and settings.hermes_scheduler_enabled:
         scheduler.start()
+        logger.info("Scheduler started with %d jobs", len(scheduler.get_jobs()))
+    else:
+        logger.warning(
+            "Scheduler NOT started (hermes_env=%s, scheduler_enabled=%s) — "
+            "manual scans only via POST /api/scan/{portfolio}",
+            settings.hermes_env, settings.hermes_scheduler_enabled,
+        )
     app.state.scheduler = scheduler  # expose to API endpoints
-    logger.info("Scheduler started with %d jobs", len(scheduler.get_jobs()))
 
     logger.info(
         "Alpaca: %s | Telegram: %s | Halted: %s",
